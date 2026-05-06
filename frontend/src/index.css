@@ -1,0 +1,122 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8f9fa;
+  overflow-x: hidden;
+}
+
+/* Timeline specific styles */
+.timeline-container {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  background-color: #6a41e6;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .timeline-line {
+    left: 40px;
+    transform: none;
+  }
+}
+
+/* Modal Backdrop Blur */
+.custom-backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Navbar Link Hover Animation */
+.nav-link-hover {
+  transition: transform 0.4s ease, color 0.4s ease !important;
+  display: inline-block;
+}
+
+.nav-link-hover:hover {
+  transform: scale(1.15);
+  color: #6a41e6 !important;
+}
+
+/* Footer Link Hover */
+.hover-primary {
+  transition: color 0.3s ease;
+}
+.hover-primary:hover {
+  color: #6a41e6 !important;
+}
+
+/* Google Translate Widget Overrides */
+body > .skiptranslate {
+  display: none !important;
+}
+.goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon, .goog-te-banner-frame {
+  display: none !important;
+}
+.goog-logo-link {
+  display: none !important;
+}
+.goog-te-gadget {
+  font-size: 0px !important;
+  color: transparent !important;
+}
+.goog-te-gadget .goog-te-combo {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+}
+.goog-tooltip {
+  display: none !important;
+}
+.goog-tooltip:hover {
+  display: none !important;
+}
+.goog-text-highlight {
+  background-color: transparent !important;
+  border: none !important; 
+  box-shadow: none !important;
+}
+#google_translate_element {
+  display: none !important;
+}
+
+/* Aggressive Dark Mode Overrides */
+[data-bs-theme="dark"] body,
+[data-bs-theme="dark"] .bg-white,
+[data-bs-theme="dark"] .bg-light,
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] footer,
+[data-bs-theme="dark"] .navbar {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .text-dark,
+[data-bs-theme="dark"] .text-secondary,
+[data-bs-theme="dark"] .text-muted,
+[data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, 
+[data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6,
+[data-bs-theme="dark"] p, [data-bs-theme="dark"] span, [data-bs-theme="dark"] a {
+  color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .text-primary {
+  color: #6ea8fe !important;
+}
+
+/* Highlight exam cards border in dark mode */
+[data-bs-theme="dark"] .card {
+  border: 1.5px solid rgba(110, 168, 254, 0.55) !important;
+  box-shadow: 0 0 12px rgba(110, 168, 254, 0.18), 0 2px 16px rgba(0,0,0,0.5) !important;
+}
