@@ -1,7 +1,31 @@
+:root {
+  --cdac-bg: #faf8ff;
+  --cdac-surface: #ffffff;
+  --cdac-surface-alt: #f3eeff;
+  --cdac-primary: #7c5cff;
+  --cdac-primary-soft: #cbb6e9;
+  --cdac-primary-deep: #6a41e6;
+  --cdac-text: #2a2440;
+  --cdac-text-muted: #6b6786;
+  --cdac-border: #ece6fb;
+}
+
+[data-bs-theme="dark"] {
+  --cdac-bg: #0f0f13;
+  --cdac-surface: #1a1a24;
+  --cdac-surface-alt: #232336;
+  --cdac-primary: #9b82ff;
+  --cdac-primary-soft: #8561db;
+  --cdac-primary-deep: #5431c4;
+  --cdac-text: #f0f0f5;
+  --cdac-text-muted: #9e9db3;
+  --cdac-border: #33334d;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f8f9fa;
+  background-color: var(--cdac-bg);
   overflow-x: hidden;
 }
 
@@ -48,6 +72,31 @@ body {
   color: #6a41e6 !important;
 }
 
+/* Logout Text Link Hover */
+.logout-text-hover {
+  position: relative;
+  color: #6a41e6 !important;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 8px;
+  transition: color 0.3s ease;
+}
+
+.logout-text-hover::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #6a41e6;
+  transition: width 0.3s ease;
+}
+
+.logout-text-hover:hover::after {
+  width: 100%;
+}
+
 /* Footer Link Hover */
 .hover-primary {
   transition: color 0.3s ease;
@@ -91,32 +140,39 @@ body {
   display: none !important;
 }
 
-/* Aggressive Dark Mode Overrides */
-[data-bs-theme="dark"] body,
-[data-bs-theme="dark"] .bg-white,
-[data-bs-theme="dark"] .bg-light,
+/* Semantic Dark Mode Overrides */
+[data-bs-theme="dark"] .bg-white {
+  background-color: var(--cdac-surface) !important;
+}
+[data-bs-theme="dark"] .bg-light {
+  background-color: var(--cdac-bg) !important;
+}
 [data-bs-theme="dark"] .card,
 [data-bs-theme="dark"] footer,
 [data-bs-theme="dark"] .navbar {
-  background-color: #121212 !important;
-  color: #ffffff !important;
+  background-color: var(--cdac-surface) !important;
 }
 
-[data-bs-theme="dark"] .text-dark,
+[data-bs-theme="dark"] .text-dark {
+  color: var(--cdac-text) !important;
+}
 [data-bs-theme="dark"] .text-secondary,
-[data-bs-theme="dark"] .text-muted,
-[data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, 
-[data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6,
-[data-bs-theme="dark"] p, [data-bs-theme="dark"] span, [data-bs-theme="dark"] a {
-  color: #ffffff !important;
+[data-bs-theme="dark"] .text-muted {
+  color: var(--cdac-text-muted) !important;
 }
 
 [data-bs-theme="dark"] .text-primary {
-  color: #6ea8fe !important;
+  color: var(--cdac-primary) !important;
 }
 
 /* Highlight exam cards border in dark mode */
 [data-bs-theme="dark"] .card {
-  border: 1.5px solid rgba(110, 168, 254, 0.55) !important;
-  box-shadow: 0 0 12px rgba(110, 168, 254, 0.18), 0 2px 16px rgba(0,0,0,0.5) !important;
+  border: 1px solid var(--cdac-border) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
 }
+
+/* Custom Webkit Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { height: 8px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: var(--cdac-bg); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--cdac-primary-soft); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--cdac-primary); }

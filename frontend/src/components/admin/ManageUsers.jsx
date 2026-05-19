@@ -74,7 +74,7 @@ const ManageUsers = () => {
         <Card.Body className="p-4">
           <Row className="align-items-center g-3">
             <Col md={4}>
-              <h4 className="fw-bold mb-0" style={{ color: '#6a41e6' }}>User Registry</h4>
+              <h4 className="fw-bold mb-0" style={{ color: '#7c5cff' }}>User Registry</h4>
               <p className="text-muted small mb-0">Manage roles and track student activity</p>
             </Col>
             <Col md={4}>

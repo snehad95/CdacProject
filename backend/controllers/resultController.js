@@ -40,7 +40,9 @@ export const submitExam = async (req, res) => {
       };
     });
 
-    const isPassed = examDetails && examDetails.passingScore ? (score >= examDetails.passingScore) : false;
+    const maxPossibleScore = questions.length;
+    const percentage = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
+    const isPassed = examDetails && examDetails.passingScore ? (percentage >= examDetails.passingScore) : false;
 
     const newResult = new Result({
       userId,

@@ -2,51 +2,41 @@ import React from 'react';
 
 const HeroBanner = () => {
   return (
-    <div style={{ background: "linear-gradient(135deg, #cbb6e9, #93c5fd, #a78bfa)", padding: '10px' }}>
-      <div className="container my-5 d-flex justify-content-center ">
-
+    <div style={{ background: 'var(--cdac-bg)', padding: '20px 10px' }}>
+      <div className="container my-3 d-flex justify-content-center">
         <div
-          className="shadow"
           style={{
-            width: "100%",
-            maxWidth: "1800px",
-            height: "clamp(120px, 25vw, 260px)", // responsive height
-            borderRadius: "50px",
-            overflow: "hidden",
-            padding: "5px",
-            background: 'white',
+            width: '100%',
+            maxWidth: 1800,
+            height: 'clamp(120px, 25vw, 260px)',
+            borderRadius: 32,
+            overflow: 'hidden',
+            padding: 6,
+            background: 'linear-gradient(135deg, #cbb6e9 0%, #a78bfa 50%, #93c5fd 100%)',
+            boxShadow: '0 16px 40px rgba(124,92,255,0.25)',
           }}
         >
-          {/* Gradient wrapper behind the image */}
           <div
             style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "45px",
-              background: "linear-gradient(135deg, #cbb6e9, #93c5fd, #a78bfa)",
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              width: '100%', height: '100%',
+              borderRadius: 26,
+              background: 'var(--cdac-surface)',
+              overflow: 'hidden',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
             <img
-              src="/cdac_logo.jpg"
-              alt="C-DAC Delhi"
+              src="/cdac_logo.jpg" alt="C-DAC Delhi"
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover", 
-                objectPosition: "left center",
-                borderRadius: "45px", 
+                width: '100%', height: '100%',
+                objectFit: 'cover', objectPosition: 'left center',
+                borderRadius: 26,
               }}
             />
           </div>
         </div>
-
       </div>
     </div>
-
   );
 };
 

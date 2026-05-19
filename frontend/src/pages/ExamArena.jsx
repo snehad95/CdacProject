@@ -3,23 +3,22 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-/* ─────────────────────────────────────────────────────────
-   PROCTORED EXAM ARENA
-   Anti-cheat features:
-     • Fullscreen lock (exit = violation)
-     • Tab / window visibility lock (blur = violation)
-     • Copy / paste / right-click disabled
-     • History.back() blocked
-     • Webcam feed displayed (bottom-right)
-     • face-api.js face detection:
-         – no face detected = violation
-         – multiple faces  = violation
-     • 3-strike system → auto-submit on 3rd strike
-   ───────────────────────────────────────────────────────── */
-
 const MAX_VIOLATIONS = 3;
 
-/* ── Tiny helper: load a <script> tag once ── */
+const T = {
+  bg: 'var(--cdac-bg)',
+  surface: 'var(--cdac-surface)',
+  surfaceAlt: 'var(--cdac-surface-alt)',
+  primary: '#7c5cff',
+  primarySoft: '#cbb6e9',
+  success: '#22c55e',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  text: 'var(--cdac-text)',
+  textMuted: 'var(--cdac-text-muted)',
+  border: 'var(--cdac-border)',
+};
+
 const loadScript = (src) =>
   new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
@@ -31,49 +30,36 @@ const loadScript = (src) =>
 
 const ExamArena = () => {
   const { examId } = useParams();
-  const navigate   = useNavigate();
-  const user       = JSON.parse(localStorage.getItem('user') || '{}');
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  /* ── Exam data ── */
-  const [exam,      setExam]      = useState(null);
+  const [exam, setExam] = useState(null);
   const [questions, setQuestions] = useState([]);
-  const [answers,   setAnswers]   = useState({});
-  const answersRef  = useRef({});
-  const [timeLeft,  setTimeLeft]  = useState(0);
+  const [answers, setAnswers] = useState({});
+  const answersRef = useRef({});
+  const [timeLeft, setTimeLeft] = useState(0);
 
-  /* ── Anti-cheat state ── */
   const [violations, setViolations] = useState(0);
-  const [warnMsg,    setWarnMsg]    = useState('');
-  const [showWarn,   setShowWarn]   = useState(false);
-  const [autoSubmitted, setAutoSubmitted] = useState(false);
-  const violationsRef = useRef(0); // sync ref for async callbacks
+  const [warnMsg, setWarnMsg] = useState('');
+  const [showWarn, setShowWarn] = useState(false);
+  const violationsRef = useRef(0);
 
-  /* ── Camera / face detection ── */
-  const videoRef           = useRef(null);
+  const videoRef = useRef(null);
   const faceDetectInterval = useRef(null);
   const [faceStatus, setFaceStatus] = useState('Initializing...');
-  const faceApiLoaded      = useRef(false);
-  const streamRef          = useRef(null);
+  const faceApiLoaded = useRef(false);
+  const streamRef = useRef(null);
 
-  /* ── Misc refs ── */
-  const timerRef    = useRef(null);
+  const timerRef = useRef(null);
   const submittedRef = useRef(false);
 
-  // ================================================================
-  //  SUBMIT (called by timer expiry, violations, or manual button)
-  // ================================================================
   const submitExam = useCallback(async (reason = 'manual') => {
     if (submittedRef.current) return;
     submittedRef.current = true;
-    setAutoSubmitted(true);
-
-    // Clean up
     clearInterval(timerRef.current);
     clearInterval(faceDetectInterval.current);
     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-    // Exit fullscreen
-    try { if (document.exitFullscreen) document.exitFullscreen(); } catch (_) {}
-    // Re-enable right-click / copy
+    try { if (document.exitFullscreen) document.exitFullscreen(); } catch (_) { }
     document.oncontextmenu = null;
     document.oncopy = null; document.onpaste = null;
 
@@ -86,15 +72,13 @@ const ExamArena = () => {
       await axios.post('http://localhost:5000/api/results/submit', {
         userId: user.id, examId, answers: formattedAnswers,
       });
-    } catch (err) {
-      console.error('Submit error', err);
-    }
+    } catch (err) { console.error('Submit error', err); }
 
     const msg = reason === 'time'
       ? 'Time is up! Your exam has been submitted.'
       : reason === 'violation'
-      ? '🚨 3 violations detected. Your exam has been auto-submitted.'
-      : 'Exam submitted successfully!';
+        ? '🚨 3 violations detected. Your exam has been auto-submitted.'
+        : 'Exam submitted successfully!';
 
     setTimeout(() => {
       if (reason === 'time') toast.error(msg);
@@ -104,15 +88,11 @@ const ExamArena = () => {
     }, 200);
   }, [examId, user.id, navigate]);
 
-  // ================================================================
-  //  VIOLATION HANDLER
-  // ================================================================
   const triggerViolation = useCallback((message) => {
     if (submittedRef.current) return;
     violationsRef.current += 1;
     const v = violationsRef.current;
     setViolations(v);
-
     if (v >= MAX_VIOLATIONS) {
       setWarnMsg(`🚨 VIOLATION #${v}: ${message}\nAuto-submitting your exam NOW!`);
       setShowWarn(true);
@@ -124,39 +104,23 @@ const ExamArena = () => {
     }
   }, [submitExam]);
 
-  // ================================================================
-  //  ANTI-CHEAT: Fullscreen, Tab-switch, Copy/Paste, Back
-  // ================================================================
   useEffect(() => {
-    /* ── Block Back navigation ── */
     window.history.pushState(null, '', window.location.href);
     const blockBack = () => window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', blockBack);
 
-    /* ── Block copy / paste / right-click ── */
     document.oncontextmenu = e => e.preventDefault();
-    document.oncopy  = e => e.preventDefault();
+    document.oncopy = e => e.preventDefault();
     document.onpaste = e => e.preventDefault();
-    document.oncut   = e => e.preventDefault();
+    document.oncut = e => e.preventDefault();
     document.addEventListener('keydown', blockKeys);
 
-    /* ── Tab-switch / window blur ── */
-    const handleBlur = () => {
-      if (!submittedRef.current)
-        triggerViolation('Tab switching or window focus lost detected.');
-    };
-    const handleVisibility = () => {
-      if (document.hidden && !submittedRef.current)
-        triggerViolation('You switched to another tab or application.');
-    };
+    const handleBlur = () => { if (!submittedRef.current) triggerViolation('Tab switching or window focus lost detected.'); };
+    const handleVisibility = () => { if (document.hidden && !submittedRef.current) triggerViolation('You switched to another tab or application.'); };
     window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibility);
 
-    /* ── Fullscreen exit ── */
-    const handleFsChange = () => {
-      if (!document.fullscreenElement && !submittedRef.current)
-        triggerViolation('Fullscreen was exited. Please stay in fullscreen mode.');
-    };
+    const handleFsChange = () => { if (!document.fullscreenElement && !submittedRef.current) triggerViolation('Fullscreen was exited. Please stay in fullscreen mode.'); };
     document.addEventListener('fullscreenchange', handleFsChange);
 
     return () => {
@@ -171,22 +135,14 @@ const ExamArena = () => {
   }, [triggerViolation]);
 
   function blockKeys(e) {
-    // Block Ctrl+C, Ctrl+V, Ctrl+A, Ctrl+X, Ctrl+P, Ctrl+S, F12, etc.
-    if ((e.ctrlKey || e.metaKey) && ['c','v','a','x','p','s','u'].includes(e.key.toLowerCase())) {
-      e.preventDefault();
-    }
-    if (['F12','F5'].includes(e.key)) e.preventDefault();
+    if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'x', 'p', 's', 'u'].includes(e.key.toLowerCase())) e.preventDefault();
+    if (['F12', 'F5'].includes(e.key)) e.preventDefault();
   }
 
-  // ================================================================
-  //  FETCH EXAM DATA
-  // ================================================================
   useEffect(() => {
     if (user.role !== 'student') { navigate('/'); return; }
-
     const fetchExamData = async () => {
       try {
-        // 1. Check if user already submitted this exam
         try {
           const checkRes = await axios.get(`http://localhost:5000/api/results/student/${user.id}`);
           const hasAttempted = checkRes.data.some(r => r.examId._id === examId);
@@ -197,17 +153,13 @@ const ExamArena = () => {
           }
         } catch (err) { console.error("Result check failed", err); }
 
-        // 2. Fetch Exam and Questions
         const [examsRes, qRes] = await Promise.all([
           axios.get('http://localhost:5000/api/exams'),
           axios.get(`http://localhost:5000/api/questions/exam/${examId}`),
         ]);
-        
         const current = examsRes.data.find(e => e._id === examId);
         setExam(current);
         if (current) setTimeLeft(current.durationMinutes * 60);
-
-        // 3. Shuffle Questions randomly
         const shuffled = qRes.data.sort(() => Math.random() - 0.5);
         setQuestions(shuffled);
       } catch (err) { console.error(err); }
@@ -215,9 +167,6 @@ const ExamArena = () => {
     fetchExamData();
   }, [examId, navigate, user.role, user.id]);
 
-  // ================================================================
-  //  COUNTDOWN TIMER
-  // ================================================================
   useEffect(() => {
     if (!exam || timeLeft <= 0) return;
     timerRef.current = setInterval(() => {
@@ -229,36 +178,21 @@ const ExamArena = () => {
     return () => clearInterval(timerRef.current);
   }, [exam]); // eslint-disable-line
 
-  // ================================================================
-  //  WEBCAM + FACE DETECTION
-  // ================================================================
   useEffect(() => {
     let alive = true;
-
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
-
-        // Load face-api.js from CDN (Unified maintained version)
         await loadScript('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js');
-
         if (!alive) return;
         const faceapi = window.faceapi;
-
-        // Load tiny models from a reliable weights source
         const MODEL_URL = 'https://vladmandic.github.io/face-api/model/';
-        
         setFaceStatus('Loading Models...');
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        ]);
-        
+        await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)]);
         faceApiLoaded.current = true;
         setFaceStatus('Active');
-
-        // Start detection loop every 3 seconds
         faceDetectInterval.current = setInterval(async () => {
           if (!alive || submittedRef.current || !videoRef.current || !faceApiLoaded.current) return;
           try {
@@ -266,19 +200,15 @@ const ExamArena = () => {
               videoRef.current,
               new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4, inputSize: 224 })
             );
-            if (detections.length === 0) {
-              triggerViolation('No face detected in camera! Please ensure your face is clearly visible.');
-            } else if (detections.length > 1) {
-              triggerViolation(`Multiple faces detected (${detections.length}). Exam violation! Only you must be in the frame.`);
-            }
-          } catch (_) {}
+            if (detections.length === 0) triggerViolation('No face detected in camera! Please ensure your face is clearly visible.');
+            else if (detections.length > 1) triggerViolation(`Multiple faces detected (${detections.length}). Exam violation! Only you must be in the frame.`);
+          } catch (_) { }
         }, 3000);
       } catch (err) {
         console.warn('Camera access denied or unavailable:', err.message);
         setFaceStatus('Camera Error');
       }
     };
-
     startCamera();
     return () => {
       alive = false;
@@ -287,120 +217,102 @@ const ExamArena = () => {
     };
   }, [triggerViolation]);
 
-  // ================================================================
-  //  HELPERS
-  // ================================================================
   const formatTime = (s) => {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
     return h > 0
-      ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-      : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+      ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+      : `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
   const answered = Object.keys(answers).length;
-  const total    = questions.length;
+  const total = questions.length;
   const progress = total > 0 ? (answered / total) * 100 : 0;
-  const pct      = timeLeft / ((exam?.durationMinutes ?? 1) * 60);
+  const pct = timeLeft / ((exam?.durationMinutes ?? 1) * 60);
   const timerRed = pct < 0.15;
 
   if (!exam) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0d0d1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#a0aec0', fontSize: '1.2rem' }}>Loading exam...</div>
+      <div style={{ ...S.page, alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: T.textMuted, fontWeight: 500 }}>Loading exam...</p>
       </div>
     );
   }
 
-  // Generate watermark array for grid display
-  const watermarkText = `${user.name || 'Candidate'} - ${user.email} - IP Cached`;
+  const watermarkText = `${user.name || 'Candidate'} - ${user.email}`;
   const watermarks = Array(20).fill(watermarkText);
 
   return (
     <div style={S.page} onContextMenu={e => e.preventDefault()}>
-
-      {/* ══════════ WATERMARK OVERLAY (Anti-Screenshot/DRM) ══════════ */}
+      {/* Watermark */}
       <div style={S.watermarkOverlay}>
-        {watermarks.map((text, i) => (
-          <div key={i} style={S.watermarkText}>{text}</div>
-        ))}
+        {watermarks.map((text, i) => (<div key={i} style={S.watermarkText}>{text}</div>))}
       </div>
 
-      {/* ══════════ TOP BAR ══════════ */}
+      {/* Top Bar */}
       <div style={S.topBar}>
         <div style={S.topLeft}>
-          <span style={S.logoText}>CDAC <span style={{ color: '#667eea' }}>ExamWeb</span></span>
+          <span style={S.logoText}>CDAC ExamWeb</span>
           <span style={S.examTitleBadge}>{exam.title}</span>
         </div>
 
-        {/* Timer */}
-        <div style={{ ...S.timer, background: timerRed ? 'rgba(252,129,129,0.15)' : 'rgba(102,126,234,0.15)', border: `1px solid ${timerRed ? '#fc8181' : '#667eea'}44` }}>
-          <span style={{ fontSize: '0.7rem', color: '#718096', fontWeight: 700, letterSpacing: '1px', display: 'block', marginBottom: '2px' }}>TIME LEFT</span>
-          <span style={{ fontSize: '1.8rem', fontWeight: 800, color: timerRed ? '#fc8181' : '#f7fafc', fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ ...S.timer, background: timerRed ? 'rgba(239,68,68,0.12)' : T.surfaceAlt, border: `1px solid ${timerRed ? 'rgba(239,68,68,0.3)' : T.border}` }}>
+          <div style={{ fontSize: '.65rem', color: T.textMuted, fontWeight: 700, letterSpacing: '1px' }}>TIME LEFT</div>
+          <div style={{ fontSize: '1.3rem', fontWeight: 800, color: timerRed ? T.danger : T.primary, fontVariantNumeric: 'tabular-nums' }}>
             {formatTime(timeLeft)}
-          </span>
+          </div>
         </div>
 
-        {/* User + Violations */}
         <div style={S.topRight}>
           <div style={S.userChip}>
             <div style={S.userAvatar}>{(user.name || 'S')[0].toUpperCase()}</div>
             <div>
-              <div style={{ color: '#f7fafc', fontWeight: 700, fontSize: '0.88rem' }}>{user.name || 'Student'}</div>
-              <div style={{ color: '#718096', fontSize: '0.72rem' }}>{user.email}</div>
+              <div style={{ color: T.text, fontWeight: 700, fontSize: '.85rem' }}>{user.name || 'Student'}</div>
+              <div style={{ color: T.textMuted, fontSize: '.7rem' }}>{user.email}</div>
             </div>
           </div>
-          <div style={{ ...S.strikeBadge, background: violations > 0 ? 'rgba(252,129,129,0.2)' : 'rgba(72,187,120,0.15)', borderColor: violations > 0 ? '#fc818166' : '#48bb7866' }}>
-            <span style={{ fontSize: '0.65rem', color: '#718096', fontWeight: 700, letterSpacing: '1px' }}>VIOLATIONS</span>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: violations >= 3 ? '#fc8181' : violations > 0 ? '#f6ad55' : '#48bb78' }}>
+          <div style={{ ...S.strikeBadge, background: violations > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', borderColor: violations > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)' }}>
+            <span style={{ fontSize: '.6rem', color: T.textMuted, fontWeight: 700, letterSpacing: '.5px' }}>VIOLATIONS</span>
+            <span style={{ fontWeight: 800, color: violations >= 3 ? T.danger : violations > 0 ? T.warning : T.success }}>
               {violations}/{MAX_VIOLATIONS}
             </span>
           </div>
         </div>
       </div>
 
-      {/* ══════════ PROGRESS BAR ══════════ */}
+      {/* Progress */}
       <div style={S.progressTrack}>
         <div style={{ ...S.progressFill, width: `${progress}%` }} />
       </div>
 
-      {/* ══════════ MAIN BODY ══════════ */}
+      {/* Body */}
       <div style={S.body}>
-
-        {/* ── Question Panel ── */}
+        {/* Questions */}
         <div style={S.questionPanel}>
           <div style={S.panelHeader}>
-            <span style={{ color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600 }}>
-              {answered}/{total} Answered
-            </span>
+            <span style={{ color: T.text, fontWeight: 700 }}>{answered}/{total} Answered</span>
           </div>
 
-          <div style={S.questionScroll}>
+          <div style={S.questionScroll} className="notranslate">
             {questions.map((q, idx) => {
               const sel = answers[q._id];
               return (
-                <div key={q._id} id={`q-${q._id}`} style={{ ...S.qCard, borderLeft: sel ? '4px solid #48bb78' : '4px solid rgba(255,255,255,0.08)' }}>
+                <div key={q._id} id={`q-${q._id}`} style={{ ...S.qCard, borderLeft: sel ? `4px solid ${T.success}` : `4px solid ${T.border}` }}>
                   <div style={S.qNumber}>Q{idx + 1}</div>
-                  <div style={S.qText}>{q.text}</div>
-                  {q.imageUrl && (
-                    <img
-                      src={`http://localhost:5000${q.imageUrl}`}
-                      alt="question"
-                      style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', margin: '10px 0', objectFit: 'contain' }}
-                    />
-                  )}
+                  <p style={S.qText}>{q.text}</p>
+                  {q.imageUrl && <img src={q.imageUrl} alt="" style={{ maxWidth: '100%', borderRadius: 10, marginBottom: 14 }} />}
                   <div style={S.optionsList}>
                     {q.options.map((opt, oIdx) => {
                       const isSelected = sel === opt.text;
                       return (
-                        <label key={oIdx} style={{ ...S.optionLabel, background: isSelected ? 'rgba(102,126,234,0.2)' : 'rgba(255,255,255,0.04)', border: isSelected ? '1.5px solid #667eea' : '1.5px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
-                          <div style={{ ...S.optionDot, background: isSelected ? '#667eea' : 'transparent', border: isSelected ? '2px solid #667eea' : '2px solid rgba(255,255,255,0.25)' }}>
-                            {isSelected && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fff' }} />}
-                          </div>
+                        <label key={oIdx} style={{ ...S.optionLabel, background: isSelected ? 'rgba(124,92,255,0.1)' : T.surfaceAlt, border: `1px solid ${isSelected ? T.primary : T.border}`, cursor: 'pointer' }}>
+                          <span style={{ ...S.optionDot, background: isSelected ? T.primary : T.surface, border: `2px solid ${isSelected ? T.primary : T.primarySoft}` }}>
+                            {isSelected && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cdac-surface)' }} />}
+                          </span>
                           <input
                             type="radio"
-                            name={`q-${q._id}`}
+                            name={q._id}
                             style={{ display: 'none' }}
                             checked={isSelected}
                             onChange={() => {
@@ -411,7 +323,7 @@ const ExamArena = () => {
                               });
                             }}
                           />
-                          <span style={{ color: isSelected ? '#e2e8f0' : '#a0aec0', fontSize: '0.92rem' }}>{opt.text}</span>
+                          <span style={{ color: T.text, fontWeight: 500, fontSize: '.95rem' }}>{opt.text}</span>
                         </label>
                       );
                     })}
@@ -420,282 +332,187 @@ const ExamArena = () => {
               );
             })}
 
-            {/* Submit Button */}
-            <div style={{ textAlign: 'center', padding: '32px 0 16px' }}>
+            <div style={{ textAlign: 'center', padding: '20px 0 40px' }}>
               <button
                 style={S.submitBtn}
                 onClick={() => { if (window.confirm(`Submit exam? You've answered ${answered}/${total} questions.`)) submitExam('manual'); }}
-              >
-                ✓ Submit Exam
-              </button>
+              >✓ Submit Exam</button>
             </div>
           </div>
         </div>
 
-        {/* ── Right Sidebar: User + Camera + Question Palette ── */}
+        {/* Sidebar */}
         <div style={S.sidebar}>
-
-          {/* User Card */}
           <div style={S.sideCard}>
             <div style={S.sideAvatarBig}>{(user.name || 'S')[0].toUpperCase()}</div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ color: '#f7fafc', fontWeight: 700, fontSize: '0.95rem' }}>{user.name}</div>
-              <div style={{ color: '#718096', fontSize: '0.78rem', marginTop: '2px' }}>{user.email}</div>
+              <p style={{ color: T.text, fontWeight: 700, margin: 0 }}>{user.name}</p>
+              <p style={{ color: T.textMuted, fontSize: '.75rem', margin: 0 }}>{user.email}</p>
             </div>
           </div>
 
-          {/* Camera Feed */}
           <div style={S.cameraCard}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: faceStatus === 'Active' ? '#48bb78' : '#ed8936', boxShadow: faceStatus === 'Active' ? '0 0 6px #48bb78' : 'none' }} />
-                <span style={{ color: '#718096', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '1px' }}>PROCTOR: {faceStatus}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: faceStatus === 'Active' ? T.success : T.warning }} />
+                <span style={{ color: T.text, fontSize: '.72rem', fontWeight: 700 }}>PROCTOR: {faceStatus}</span>
               </div>
             </div>
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{ width: '100%', borderRadius: '10px', background: '#111', minHeight: '120px', objectFit: 'cover', border: faceStatus === 'Active' ? '1px solid #48bb7833' : '1px solid #ed893633' }}
-            />
-            <div style={{ textAlign: 'center', marginTop: '6px', color: '#718096', fontSize: '0.7rem' }}>
-              Keep your face clearly visible
-            </div>
+            <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', borderRadius: 10, background: '#000', aspectRatio: '4/3', objectFit: 'cover' }} />
+            <p style={{ color: T.textMuted, fontSize: '.7rem', textAlign: 'center', margin: '8px 0 0' }}>Keep your face clearly visible</p>
           </div>
 
-          {/* Violation Status */}
-          <div style={{ ...S.sideCard, background: violations >= MAX_VIOLATIONS ? 'rgba(252,129,129,0.15)' : violations > 0 ? 'rgba(246,173,85,0.12)' : 'rgba(72,187,120,0.12)' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '4px' }}>
-                {violations >= MAX_VIOLATIONS ? '🚨' : violations > 0 ? '⚠️' : '✅'}
-              </div>
-              <div style={{ color: '#f7fafc', fontWeight: 700, fontSize: '0.88rem' }}>Anti-Cheat Status</div>
-              <div style={{ color: violations >= 2 ? '#fc8181' : violations > 0 ? '#f6ad55' : '#48bb78', fontWeight: 800, fontSize: '1.1rem', marginTop: '4px' }}>
-                {violations}/{MAX_VIOLATIONS} Violations
-              </div>
-              <div style={{ color: '#718096', fontSize: '0.72rem', marginTop: '4px' }}>
-                {MAX_VIOLATIONS - violations} strike(s) remaining
-              </div>
-            </div>
+          <div style={{ ...S.sideCard, background: violations >= MAX_VIOLATIONS ? 'rgba(239,68,68,0.1)' : violations > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.08)', border: `1px solid ${violations >= MAX_VIOLATIONS ? 'rgba(239,68,68,0.3)' : violations > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.25)'}` }}>
+            <span style={{ fontSize: '1.6rem' }}>{violations >= MAX_VIOLATIONS ? '🚨' : violations > 0 ? '⚠️' : '✅'}</span>
+            <p style={{ color: T.text, fontWeight: 700, margin: 0, fontSize: '.85rem' }}>Anti-Cheat Status</p>
+            <p style={{ color: violations >= 2 ? T.danger : violations > 0 ? T.warning : T.success, fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>
+              {violations}/{MAX_VIOLATIONS} Violations
+            </p>
+            <p style={{ color: T.textMuted, fontSize: '.7rem', margin: 0 }}>{MAX_VIOLATIONS - violations} strike(s) remaining</p>
           </div>
 
-          {/* Question Palette */}
           <div style={S.paletteCard}>
-            <div style={{ color: '#a0aec0', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px' }}>
-              QUESTION PALETTE
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            <p style={{ color: T.textMuted, fontSize: '.7rem', fontWeight: 700, letterSpacing: '1px', marginBottom: 10 }}>QUESTION PALETTE</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
               {questions.map((q, i) => {
                 const done = !!answers[q._id];
                 return (
-                  <button
+                  <div
                     key={q._id}
-                    style={{ ...S.paletteDot, background: done ? '#48bb78' : 'rgba(255,255,255,0.08)', border: done ? 'none' : '1px solid rgba(255,255,255,0.15)', color: done ? '#fff' : '#718096' }}
+                    style={{ ...S.paletteDot, background: done ? T.success : T.surfaceAlt, color: done ? '#fff' : T.text, border: `1px solid ${done ? T.success : T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => {
                       const el = document.getElementById(`q-${q._id}`);
                       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }}
-                  >
-                    {i + 1}
-                  </button>
+                  >{i + 1}</div>
                 );
               })}
             </div>
-            <div style={{ marginTop: '10px', display: 'flex', gap: '12px', fontSize: '0.72rem', color: '#718096' }}>
-              <span><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#48bb78', marginRight: '4px' }} />Answered</span>
-              <span><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', marginRight: '4px' }} />Not Answered</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: '.7rem', color: T.textMuted }}>
+              <span><span style={{ display: 'inline-block', width: 10, height: 10, background: T.success, borderRadius: 2, marginRight: 4 }} />Answered</span>
+              <span><span style={{ display: 'inline-block', width: 10, height: 10, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 2, marginRight: 4 }} />Not Answered</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ══════════ VIOLATION WARNING OVERLAY ══════════ */}
+      {/* Warning Overlay */}
       {showWarn && (
         <div style={S.warnOverlay}>
-          <div style={{ ...S.warnBox, borderColor: violations >= MAX_VIOLATIONS ? '#fc8181' : '#f6ad55' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
-              {violations >= MAX_VIOLATIONS ? '🚨' : '⚠️'}
-            </div>
-            <div style={{ color: '#f7fafc', fontWeight: 800, fontSize: '1.05rem', whiteSpace: 'pre-line', textAlign: 'center', lineHeight: 1.6 }}>
-              {warnMsg}
-            </div>
+          <div style={{ ...S.warnBox, borderColor: violations >= MAX_VIOLATIONS ? T.danger : T.warning }}>
+            <div style={{ fontSize: '3rem', marginBottom: 12 }}>{violations >= MAX_VIOLATIONS ? '🚨' : '⚠️'}</div>
+            <p style={{ color: T.text, fontWeight: 600, textAlign: 'center', whiteSpace: 'pre-line', marginBottom: 20 }}>{warnMsg}</p>
             {violations < MAX_VIOLATIONS && (
-              <button
-                style={{ marginTop: '16px', background: '#f6ad55', border: 'none', color: '#1a1a1a', fontWeight: 700, padding: '10px 28px', borderRadius: '10px', cursor: 'pointer' }}
-                onClick={() => setShowWarn(false)}
-              >
-                I Understand
-              </button>
+              <button style={S.submitBtn} onClick={() => setShowWarn(false)}>I Understand</button>
             )}
           </div>
         </div>
       )}
-
-      <style>{`
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-        ::selection { background: transparent; }
-      `}</style>
     </div>
   );
 };
 
-/* ─── Styles ─── */
 const S = {
   page: {
     minHeight: '100vh', height: '100vh',
-    background: 'linear-gradient(135deg, #0d0d1a 0%, #111132 100%)',
+    background: T.bg,
     display: 'flex', flexDirection: 'column',
     fontFamily: "'Segoe UI', system-ui, sans-serif",
-    userSelect: 'none', overflow: 'hidden',
+    userSelect: 'none', overflow: 'hidden', position: 'relative',
   },
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '10px 20px',
-    background: 'rgba(255,255,255,0.03)',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
-    flexShrink: 0, zIndex: 10, flexWrap: 'wrap', gap: '8px',
+    padding: '10px 20px', background: T.surface,
+    borderBottom: `1px solid ${T.border}`,
+    flexShrink: 0, zIndex: 10, flexWrap: 'wrap', gap: 8,
+    boxShadow: '0 2px 12px rgba(124,92,255,0.05)',
   },
-  topLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
-  logoText: { fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '0.5px' },
+  topLeft: { display: 'flex', alignItems: 'center', gap: 16 },
+  logoText: { fontSize: '1.15rem', fontWeight: 800, color: T.primary, letterSpacing: '.5px' },
   examTitleBadge: {
-    background: 'rgba(102,126,234,0.15)', border: '1px solid rgba(102,126,234,0.3)',
-    color: '#a78bfa', fontSize: '0.8rem', fontWeight: 600,
-    padding: '4px 14px', borderRadius: '50px',
+    background: T.surfaceAlt, border: `1px solid ${T.border}`,
+    color: T.primary, fontSize: '.8rem', fontWeight: 600,
+    padding: '4px 14px', borderRadius: 50,
   },
-  timer: {
-    textAlign: 'center', borderRadius: '12px', padding: '6px 20px', minWidth: '120px',
-  },
-  topRight: { display: 'flex', alignItems: 'center', gap: '12px' },
-  userChip: { display: 'flex', alignItems: 'center', gap: '10px' },
+  timer: { textAlign: 'center', borderRadius: 12, padding: '6px 20px', minWidth: 120 },
+  topRight: { display: 'flex', alignItems: 'center', gap: 12 },
+  userChip: { display: 'flex', alignItems: 'center', gap: 10 },
   userAvatar: {
-    width: '36px', height: '36px', borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    width: 36, height: 36, borderRadius: '50%',
+    background: `linear-gradient(135deg, ${T.primary}, ${T.primarySoft})`,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#fff', fontWeight: 800, fontSize: '1rem',
   },
   strikeBadge: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
-    padding: '4px 14px', borderRadius: '10px', border: '1px solid',
-    minWidth: '80px',
+    padding: '4px 14px', borderRadius: 10, border: '1px solid', minWidth: 80,
   },
-
-  progressTrack: {
-    height: '4px', background: 'rgba(255,255,255,0.06)', flexShrink: 0,
-  },
-  progressFill: {
-    height: '100%',
-    background: 'linear-gradient(90deg, #667eea, #48bb78)',
-    transition: 'width 0.5s ease',
-  },
-
-  body: {
-    flex: 1, display: 'flex', overflow: 'hidden',
-  },
-
-  questionPanel: {
-    flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-    borderRight: '1px solid rgba(255,255,255,0.06)',
-  },
-  panelHeader: {
-    padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0,
-  },
-  questionScroll: {
-    flex: 1, overflowY: 'auto', padding: '20px 24px',
-  },
+  progressTrack: { height: 4, background: T.surfaceAlt, flexShrink: 0 },
+  progressFill: { height: '100%', background: `linear-gradient(90deg, ${T.primary}, ${T.success})`, transition: 'width 0.5s ease' },
+  body: { flex: 1, display: 'flex', overflow: 'hidden' },
+  questionPanel: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${T.border}` },
+  panelHeader: { padding: '12px 24px', borderBottom: `1px solid ${T.border}`, flexShrink: 0, background: T.surface },
+  questionScroll: { flex: 1, overflowY: 'auto', padding: '20px 24px' },
   qCard: {
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: '14px', padding: '20px 22px', marginBottom: '20px',
+    background: T.surface, border: `1px solid ${T.border}`,
+    borderRadius: 14, padding: '20px 22px', marginBottom: 20,
+    boxShadow: '0 4px 12px -8px rgba(124,92,255,0.15)',
     transition: 'border-left-color 0.3s',
   },
-  qNumber: {
-    fontSize: '0.72rem', fontWeight: 700, color: '#667eea',
-    letterSpacing: '1px', marginBottom: '8px',
-  },
-  qText: { color: '#f7fafc', fontWeight: 600, fontSize: '1rem', lineHeight: 1.6, marginBottom: '16px' },
-  optionsList: { display: 'flex', flexDirection: 'column', gap: '10px' },
-  optionLabel: {
-    display: 'flex', alignItems: 'center', gap: '12px',
-    borderRadius: '10px', padding: '12px 16px',
-    transition: 'all 0.2s',
-  },
-  optionDot: {
-    width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    transition: 'all 0.2s',
-  },
+  qNumber: { fontSize: '.72rem', fontWeight: 700, color: T.primary, letterSpacing: '1px', marginBottom: 8 },
+  qText: { color: T.text, fontWeight: 600, fontSize: '1rem', lineHeight: 1.6, marginBottom: 16 },
+  optionsList: { display: 'flex', flexDirection: 'column', gap: 10 },
+  optionLabel: { display: 'flex', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 16px', transition: 'all .2s' },
+  optionDot: { width: 20, height: 20, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' },
   submitBtn: {
-    background: 'linear-gradient(135deg, #48bb78, #38a169)',
+    background: `linear-gradient(135deg, ${T.success}, #16a34a)`,
     border: 'none', color: '#fff', fontWeight: 800,
     fontSize: '1rem', padding: '14px 48px',
-    borderRadius: '12px', cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(72,187,120,0.35)',
-    letterSpacing: '0.3px',
+    borderRadius: 12, cursor: 'pointer',
+    boxShadow: '0 10px 24px -8px rgba(34,197,94,0.5)',
+    letterSpacing: '.3px',
   },
-
   sidebar: {
-    width: '260px', flexShrink: 0,
-    background: 'rgba(255,255,255,0.02)',
-    overflowY: 'auto', padding: '16px',
-    display: 'flex', flexDirection: 'column', gap: '14px',
+    width: 280, flexShrink: 0, background: T.surface,
+    overflowY: 'auto', padding: 16,
+    display: 'flex', flexDirection: 'column', gap: 14,
+    borderLeft: `1px solid ${T.border}`,
   },
   sideCard: {
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '14px', padding: '16px',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+    background: T.surfaceAlt, border: `1px solid ${T.border}`,
+    borderRadius: 14, padding: 16,
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
   },
   sideAvatarBig: {
-    width: '52px', height: '52px', borderRadius: '50%',
-    background: 'linear-gradient(135deg,#667eea,#764ba2)',
+    width: 52, height: 52, borderRadius: '50%',
+    background: `linear-gradient(135deg, ${T.primary}, ${T.primarySoft})`,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#fff', fontWeight: 900, fontSize: '1.4rem',
   },
-  cameraCard: {
-    background: 'rgba(0,0,0,0.3)',
-    border: '1px solid rgba(72,187,120,0.25)',
-    borderRadius: '14px', padding: '14px',
-  },
-  paletteCard: {
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '14px', padding: '14px',
-  },
-  paletteDot: {
-    width: '32px', height: '32px', borderRadius: '8px',
-    fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-
+  cameraCard: { background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: 14 },
+  paletteCard: { background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 14, padding: 14 },
+  paletteDot: { height: 32, borderRadius: 8, fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all .2s' },
   warnOverlay: {
     position: 'fixed', inset: 0, zIndex: 9999,
-    background: 'rgba(0,0,0,0.85)',
+    background: 'rgba(42,36,64,0.55)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     backdropFilter: 'blur(6px)',
   },
   warnBox: {
-    background: '#1a1a2e',
-    border: '2px solid',
-    borderRadius: '20px', padding: '40px 48px',
+    background: T.surface, border: '2px solid',
+    borderRadius: 20, padding: '40px 48px',
     display: 'flex', flexDirection: 'column', alignItems: 'center',
-    maxWidth: '460px', width: '90%',
-    boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
+    maxWidth: 460, width: '90%',
+    boxShadow: '0 30px 80px rgba(42,36,64,0.3)',
   },
-
   watermarkOverlay: {
-    position: 'absolute', inset: 0, zIndex: 9998,
+    position: 'absolute', inset: 0, zIndex: 1,
     pointerEvents: 'none', overflow: 'hidden',
     display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '40px', padding: '40px', opacity: 0.05,
+    gap: 40, padding: 40, opacity: 0.06,
     transform: 'rotate(-15deg)', transformOrigin: 'center center',
   },
-  watermarkText: {
-    color: '#fff', fontSize: '1.5rem', fontWeight: 800,
-    whiteSpace: 'nowrap', userSelect: 'none',
-  },
+  watermarkText: { color: T.primary, fontSize: '1.5rem', fontWeight: 800, whiteSpace: 'nowrap', userSelect: 'none' },
 };
 
 export default ExamArena;

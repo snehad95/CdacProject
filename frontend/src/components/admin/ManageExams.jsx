@@ -186,7 +186,7 @@ const ManageExams = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="d-flex align-items-center gap-1 fw-semibold" style={{ color: '#6a41e6' }}>
+                        <div className="d-flex align-items-center gap-1 fw-semibold" style={{ color: '#7c5cff' }}>
                           <Clock size={14} /> {dur || `${ex.durationMinutes} min`}
                         </div>
                       </td>
@@ -207,7 +207,7 @@ const ManageExams = () => {
                         <span className="badge bg-light text-dark border px-3 py-2 rounded-3">{ex.category}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="fw-bold" style={{ color: '#6a41e6' }}>{ex.passingScore}%</div>
+                        <div className="fw-bold" style={{ color: '#7c5cff' }}>{ex.passingScore}%</div>
                         <div className="small text-muted" style={{ fontSize: '0.7rem' }}>TO PASS</div>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -240,7 +240,7 @@ const ManageExams = () => {
           <Card className="border-0 shadow-sm rounded-4 mb-5">
         <Card.Body className="p-4">
           <div className="d-flex align-items-center gap-2 mb-4 border-bottom pb-3">
-            <div style={{ backgroundColor: '#6a41e615', color: '#6a41e6', padding: '10px', borderRadius: '12px' }}>
+            <div style={{ backgroundColor: '#7c5cff15', color: '#7c5cff', padding: '10px', borderRadius: '12px' }}>
               <PlusCircle size={24} />
             </div>
             <h4 className="fw-bold mb-0">Create &amp; Publish New Exam</h4>
@@ -315,7 +315,7 @@ const ManageExams = () => {
                   readOnly={!!autoDuration}
                 />
                 {autoDuration && (
-                  <div className="small mt-1 fw-semibold" style={{ color: '#6a41e6' }}>
+                  <div className="small mt-1 fw-semibold" style={{ color: '#7c5cff' }}>
                     ⏱ Auto: {autoDuration}
                   </div>
                 )}
@@ -368,7 +368,7 @@ const ManageExams = () => {
 
             <div className="text-end">
               <Button type="submit" size="lg" className="px-5 fw-800 rounded-pill shadow-sm"
-                style={{ backgroundColor: '#6a41e6', border: 'none' }}>
+                style={{ backgroundColor: '#7c5cff', border: 'none' }}>
                 Publish Exam
               </Button>
             </div>
@@ -381,7 +381,7 @@ const ManageExams = () => {
       {/* ── EDIT MODAL ── */}
       <Modal show={showEdit} onHide={() => setShowEdit(false)} size="lg" centered>
         <Modal.Header closeButton className="border-0 pb-0">
-          <Modal.Title className="fw-bold" style={{ color: '#6a41e6' }}>
+          <Modal.Title className="fw-bold" style={{ color: '#7c5cff' }}>
             <Pencil size={20} className="me-2" /> Edit Exam
           </Modal.Title>
         </Modal.Header>
@@ -447,7 +447,7 @@ const ManageExams = () => {
                   readOnly={!!editAutoDuration}
                 />
                 {editAutoDuration && (
-                  <div className="small mt-1 fw-semibold" style={{ color: '#6a41e6' }}>⏱ {editAutoDuration}</div>
+                  <div className="small mt-1 fw-semibold" style={{ color: '#7c5cff' }}>⏱ {editAutoDuration}</div>
                 )}
               </Col>
               <Col md={2} className="mb-3">
@@ -507,7 +507,7 @@ const ManageExams = () => {
                 Cancel
               </Button>
               <Button type="submit" className="rounded-pill px-5 fw-bold"
-                style={{ backgroundColor: '#6a41e6', border: 'none' }}>
+                style={{ backgroundColor: '#7c5cff', border: 'none' }}>
                 Save Changes
               </Button>
             </div>
@@ -521,9 +521,9 @@ const ManageExams = () => {
         .fw-800 { font-weight: 800; }
         .hover-scale { transition: transform 0.2s; }
         .hover-scale:hover { transform: scale(1.2); }
-        .custom-pills .nav-link { color: #6a41e6; border-radius: 12px; font-weight: 600; padding: 10px 24px; margin-right: 10px; border: 1px solid transparent; background: transparent; }
-        .custom-pills .nav-link:hover { background: #6a41e615; border-color: #6a41e6; }
-        .custom-pills .nav-link.active { background: #6a41e6; color: white; border-color: #6a41e6; box-shadow: 0 4px 15px rgba(106, 65, 230, 0.3); }
+        .custom-pills .nav-link { color: #7c5cff; border-radius: 12px; font-weight: 600; padding: 10px 24px; margin-right: 10px; border: 1px solid transparent; background: transparent; }
+        .custom-pills .nav-link:hover { background: #7c5cff15; border-color: #7c5cff; }
+        .custom-pills .nav-link.active { background: #7c5cff; color: white; border-color: #7c5cff; box-shadow: 0 4px 15px rgba(106, 65, 230, 0.3); }
       `}</style>
     </div>
   );

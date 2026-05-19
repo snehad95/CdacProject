@@ -96,7 +96,7 @@ const ManagePracticeTests = () => {
       <Card className="border-0 shadow-sm rounded-4 mb-5">
         <Card.Body className="p-4">
           <div className="d-flex align-items-center gap-2 mb-4 border-bottom pb-3">
-            <div style={{ backgroundColor: '#6a41e615', color: '#6a41e6', padding: '10px', borderRadius: '12px' }}>
+            <div style={{ backgroundColor: '#7c5cff15', color: '#7c5cff', padding: '10px', borderRadius: '12px' }}>
               <PlusCircle size={24} />
             </div>
             <h4 className="fw-bold mb-0">Add New Practice Test Section</h4>
@@ -146,7 +146,7 @@ const ManagePracticeTests = () => {
 
             <div className="text-end">
               <Button type="submit" size="lg" className="px-5 fw-800 rounded-pill shadow-sm"
-                style={{ backgroundColor: '#6a41e6', border: 'none' }}>
+                style={{ backgroundColor: '#7c5cff', border: 'none' }}>
                 Add Test Section
               </Button>
             </div>
@@ -213,7 +213,7 @@ const ManagePracticeTests = () => {
       {/* ── EDIT MODAL ── */}
       <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
         <Modal.Header closeButton className="border-0">
-          <Modal.Title className="fw-bold" style={{ color: '#6a41e6' }}>
+          <Modal.Title className="fw-bold" style={{ color: '#7c5cff' }}>
             <Pencil size={20} className="me-2" /> Edit Practice Test
           </Modal.Title>
         </Modal.Header>
@@ -255,7 +255,7 @@ const ManagePracticeTests = () => {
                 Cancel
               </Button>
               <Button type="submit" className="rounded-pill px-5 fw-bold"
-                style={{ backgroundColor: '#6a41e6', border: 'none' }}>
+                style={{ backgroundColor: '#7c5cff', border: 'none' }}>
                 Save Changes
               </Button>
             </div>

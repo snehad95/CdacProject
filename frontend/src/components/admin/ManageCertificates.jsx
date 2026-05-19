@@ -94,7 +94,7 @@ const ManageCertificates = () => {
                       variant="primary" 
                       size="sm" 
                       className="rounded-pill px-3 d-flex align-items-center gap-2 ms-auto"
-                      style={{ backgroundColor: '#6a41e6', border: 'none' }}
+                      style={{ backgroundColor: '#7c5cff', border: 'none' }}
                       onClick={() => issueCertificate(r._id)}
                     >
                       <Award size={16} /> Issue Certificate

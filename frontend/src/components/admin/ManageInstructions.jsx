@@ -74,7 +74,7 @@ const ManageInstructions = () => {
 
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
-      <Card.Header style={{ backgroundColor: '#6a41e6', color: '#fff', padding: '0' }}>
+      <Card.Header style={{ backgroundColor: '#7c5cff', color: '#fff', padding: '0' }}>
         <div className="p-4 d-flex align-items-center gap-2">
             <Info size={24} />
             <h4 className="mb-0 fw-bold">Instruction Manager</h4>
@@ -128,7 +128,7 @@ const ManageInstructions = () => {
               style={{ backgroundColor: '#f8faff' }}
             />
             <Button 
-              style={{ backgroundColor: '#6a41e6', border: 'none' }}
+              style={{ backgroundColor: '#7c5cff', border: 'none' }}
               onClick={addInstruction}
               className="px-4 fw-bold"
             >Add</Button>

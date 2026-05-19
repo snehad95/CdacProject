@@ -53,7 +53,7 @@ const StudentDashboard = () => {
                     <Card.Text className="small">{exam.description || 'No description provided.'}</Card.Text>
                     <div className="d-flex justify-content-between align-items-center mt-3">
                       <span className="badge bg-secondary">{exam.durationMinutes} mins</span>
-                      <Button size="sm" className="text-white fw-semibold" style={{ backgroundColor: '#6a41e6', border: 'none' }} onClick={() => navigate(`/exam/${exam._id}`)}>Attempt Test</Button>
+                      <Button size="sm" className="text-white fw-semibold" style={{ backgroundColor: '#cbb6e9', border: 'none' }} onClick={() => navigate(`/exam/${exam._id}`)}>Attempt Test</Button>
                     </div>
                   </Card.Body>
                 </Card>

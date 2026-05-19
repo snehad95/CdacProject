@@ -4,10 +4,11 @@ import { motion } from 'framer-motion';
 
 const About = () => {
   return (
+    <div style={{ backgroundColor: 'var(--cdac-bg)', minHeight: '100vh', paddingTop: '40px', paddingBottom: '40px' }}>
     <Container className="my-5 overflow-hidden" style={{ maxWidth: '1800px' }}>
       <motion.h2
         className="text-center fw-bold mb-3"
-        style={{ color: '#6a41e6', letterSpacing: '0.5px' }}
+        style={{ color: '#7c5cff', letterSpacing: '0.5px' }}
         initial={{ opacity: 0, x: -150 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: false, amount: 0.3 }}
@@ -17,11 +18,11 @@ const About = () => {
       </motion.h2>
 
       {/* Purple underline divider */}
-      <div className="mx-auto rounded-pill mb-5" style={{ width: '90px', height: '4px', backgroundColor: '#6a41e6' }}></div>
+      <div className="mx-auto rounded-pill mb-5" style={{ width: '90px', height: '4px', backgroundColor: '#7c5cff' }}></div>
       <Row className="justify-content-center ">
         <Col lg={11}>
-          <Card className="shadow-sm border-0" style={{ backgroundColor: '#ffffff' }}>
-            <Card.Body className="p-4 p-md-5" style={{ lineHeight: '1.85', fontSize: '1.05rem', color: '#444' }}>
+          <Card className="shadow-sm border-0" style={{ backgroundColor: 'var(--cdac-surface)' }}>
+            <Card.Body className="p-4 p-md-5" style={{ lineHeight: '1.85', fontSize: '1.05rem', color: 'var(--cdac-text-muted)' }}>
               <p className="text-justify mb-4">
                 The Centre for Development of Advanced Computing (C-DAC), New Delhi is one of the key centres of C-DAC, an autonomous scientific society under the Ministry of Electronics and Information Technology (MeitY), Government of India. C-DAC New Delhi plays a significant role in carrying out research, development, training, and consultancy in advanced areas of Information Technology, Electronics, and Digital Governance aligned with national priorities.
               </p>
@@ -42,6 +43,7 @@ const About = () => {
         </Col>
       </Row>
     </Container>
+    </div>
   );
 };
 

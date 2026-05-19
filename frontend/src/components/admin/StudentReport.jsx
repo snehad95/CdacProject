@@ -53,7 +53,7 @@ const StudentReport = () => {
         {/* Student List Sidebar */}
         <Col lg={4}>
           <div className="d-flex align-items-center gap-2 mb-4">
-            <div style={{ backgroundColor: '#6a41e615', color: '#6a41e6', padding: '10px', borderRadius: '12px' }}>
+            <div style={{ backgroundColor: '#7c5cff15', color: '#7c5cff', padding: '10px', borderRadius: '12px' }}>
               <User size={24} />
             </div>
             <h4 className="fw-bold mb-0">Student Registry</h4>
@@ -220,7 +220,7 @@ const StudentReport = () => {
         .hover-bg-light-dark:hover { background-color: #f1f5f9 !important; }
         .cursor-pointer { cursor: pointer; }
         .fw-800 { font-weight: 800; }
-        .bg-primary-subtle { background-color: #6a41e615; }
+        .bg-primary-subtle { background-color: #7c5cff15; }
         .bg-success-subtle { background-color: #48bb7815; }
       `}</style>
     </div>

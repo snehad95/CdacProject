@@ -5,6 +5,11 @@ import { User } from 'lucide-react';
 import LoginModal from './LoginModal';
 import RegisterModal from './RegisterModal';
 
+const T = {
+  surface: 'var(--cdac-surface)', primary: '#7c5cff', primaryDeep: '#6a41e6',
+  primarySoft: '#cbb6e9', text: 'var(--cdac-text)', muted: '#6b6483', border: 'var(--cdac-border)',
+};
+
 const AppNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,71 +25,87 @@ const AppNavbar = () => {
     navigate('/');
   };
 
-  const getNavClass = (path) => {
-    return location.pathname === path
-      ? "fw-bold fs-5 nav-link-hover"
-      : "fw-semibold fs-6 text-dark nav-link-hover";
-  };
-
-  // Active link inline style
-  const getNavStyle = (path) => ({
-    color: location.pathname === path ? '#6a41e6' : undefined,
+  const isActive = (path) => location.pathname === path;
+  const navStyle = (path) => ({
+    color: isActive(path) ? T.primaryDeep : T.text,
+    fontWeight: isActive(path) ? 700 : 600,
+    fontSize: '0.95rem',
+    position: 'relative',
+    padding: '6px 4px',
   });
 
   return (
     <>
-      <Navbar bg="white" expand="lg" className="shadow-sm py-2 px-lg-4">
+      <Navbar expand="lg" className="py-2 px-lg-4"
+        style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, boxShadow: '0 2px 12px rgba(124,92,255,0.06)' }}>
         <Container fluid>
           <Navbar.Brand as={Link} to="/">
-            <img
-              src="http://recruitment-portal.in/reccdac/images/logo_cdac.png"
-              alt="CDAC Logo"
-              style={{ width: 'auto', maxWidth: '100%', height: '46px', objectFit: 'contain' }}
-              className="d-inline-block align-top"
-            />
+            <img src="http://recruitment-portal.in/reccdac/images/logo_cdac.png" alt="CDAC Logo"
+              style={{ width: 'auto', maxWidth: '100%', height: 46, objectFit: 'contain' }} />
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto gap-4 align-items-center pe-4 pb-3 pb-lg-0 me-4">
-              <Nav.Link as={Link} to="/" className={getNavClass("/")} style={getNavStyle("/")}>Home</Nav.Link>
-              <Nav.Link as={Link} to="/test" className={getNavClass("/test")} style={getNavStyle("/test")}>Test</Nav.Link>
-              <Nav.Link as={Link} to="/exams" className={getNavClass("/exams")} style={getNavStyle("/exams")}>Exams</Nav.Link>
-              <Nav.Link as={Link} to="/courses" className={getNavClass("/courses")} style={getNavStyle("/courses")}>Courses</Nav.Link>
-              <Nav.Link as={Link} to="/about" className={getNavClass("/about")} style={getNavStyle("/about")}>About Us</Nav.Link>
-              <Nav.Link as={Link} to="/contact" className={getNavClass("/contact")} style={getNavStyle("/contact")}>Contact Us</Nav.Link>
+              {[
+                { to: '/', label: 'Home' },
+                { to: '/test', label: 'Test' },
+                { to: '/exams', label: 'Exams' },
+                { to: '/courses', label: 'Courses' },
+                { to: '/about', label: 'About Us' },
+                { to: '/contact', label: 'Contact Us' },
+              ].map((item) => (
+                <Nav.Link key={item.to} as={Link} to={item.to} style={navStyle(item.to)}>
+                  {item.label}
+                  {isActive(item.to) && (
+                    <span style={{
+                      position: 'absolute', left: 0, right: 0, bottom: -4, height: 2,
+                      borderRadius: 2, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})`,
+                    }} />
+                  )}
+                </Nav.Link>
+              ))}
               {user?.role === 'admin' && (
-                <Nav.Link as={Link} to="/admin" className="text-danger fw-bold fs-6 nav-link-hover">Admin Panel</Nav.Link>
+                <Nav.Link as={Link} to="/admin" className="fw-bold" style={{ color: '#e11d48' }}>Admin Panel</Nav.Link>
               )}
               {user?.role === 'teacher' && (
-                <Nav.Link as={Link} to="/teacher" className="text-warning fw-bold fs-6 nav-link-hover" style={{ color: '#ed8936' }}>Teacher Panel</Nav.Link>
+                <Nav.Link as={Link} to="/teacher" className="fw-bold" style={{ color: '#d97706' }}>Teacher Panel</Nav.Link>
               )}
-              {user && user.role === 'student' && (
-                <Nav.Link as={Link} to="/dashboard" className="text-success fw-bold fs-6 nav-link-hover">My Dashboard</Nav.Link>
+              {user?.role === 'student' && (
+                <Nav.Link as={Link} to="/dashboard" className="fw-bold" style={{ color: '#16a34a' }}>My Dashboard</Nav.Link>
               )}
             </Nav>
             <div className="d-flex gap-2 align-items-center">
               {token ? (
                 <>
-                  <div className="d-flex align-items-center me-3" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50px', padding: '4px 8px' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '6px' }}>
+                  <div className="d-flex align-items-center me-3"
+                    style={{ background: '#f5f1ff', border: `1px solid ${T.border}`, borderRadius: 999, padding: '4px 12px 4px 4px' }}>
+                    <div style={{
+                      width: 30, height: 30, borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8,
+                    }}>
                       <User size={16} color="#fff" />
                     </div>
-                    <span style={{ color: 'black', fontWeight: 600, fontSize: '0.85rem' }}>{JSON.parse(localStorage.getItem('user') || '{}').name || 'User'}</span>
+                    <span style={{ color: T.text, fontWeight: 600, fontSize: '0.85rem' }}>
+                      {JSON.parse(localStorage.getItem('user') || '{}').name || 'User'}
+                    </span>
                   </div>
-                  <Button variant="outline-danger" className="fw-semibold px-4" onClick={handleLogout}>Logout</Button>
+                  <Button onClick={handleLogout} className="fw-semibold px-3"
+                    style={{ background: 'transparent', border: `2px solid ${T.primaryDeep}`, color: T.primaryDeep, borderRadius: 10 }}>
+                    Logout
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Button
-                    className="fw-semibold px-4"
-                    style={{ backgroundColor: 'transparent', border: '2px solid #6a41e6', color: '#6a41e6' }}
-                    onClick={() => setShowLogin(true)}
-                  >Login</Button>
-                  <Button
-                    className="fw-semibold px-4 text-white"
-                    style={{ backgroundColor: '#6a41e6', border: '2px solid #6a41e6' }}
-                    onClick={() => setShowRegister(true)}
-                  >Register</Button>
+                  <Button className="fw-semibold px-4"
+                    style={{ background: 'transparent', border: `2px solid ${T.primaryDeep}`, color: T.primaryDeep, borderRadius: 10 }}
+                    onClick={() => setShowLogin(true)}>Login</Button>
+                  <Button className="fw-semibold px-4 text-white border-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
+                      borderRadius: 10, boxShadow: '0 6px 16px rgba(124,92,255,0.35)',
+                    }}
+                    onClick={() => setShowRegister(true)}>Register</Button>
                 </>
               )}
             </div>

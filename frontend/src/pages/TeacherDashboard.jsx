@@ -41,15 +41,15 @@ const TeacherDashboard = () => {
         <ShieldCheck size={80} color="#fc8181" className="mb-4" />
         <h2 className="fw-bold mb-3">Unauthorized Access</h2>
         <p className="text-muted mb-4">You do not have the necessary permissions to access the Teacher Panel.</p>
-        <button className="btn btn-primary px-5 py-2 fw-bold" style={{ backgroundColor: '#6a41e6', border: 'none' }} onClick={() => navigate('/')}>Return Home</button>
+        <button className="btn btn-primary px-5 py-2 fw-bold" style={{ backgroundColor: '#7c5cff', border: 'none' }} onClick={() => navigate('/')}>Return Home</button>
       </Container>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#f9f9ff', minHeight: '100vh', paddingBottom: '50px' }}>
+    <div style={{ backgroundColor: 'var(--cdac-bg)', minHeight: '100vh', paddingBottom: '50px' }}>
       {/* Top Banner */}
-      <div style={{ background: 'linear-gradient(135deg, #6a41e6, #7c3aed)', height: '220px', padding: '40px 0' }} className="shadow-sm">
+      <div style={{ background: 'linear-gradient(135deg, #7c5cff, #6a41e6)', height: '220px', padding: '40px 0' }} className="shadow-sm">
         <Container>
           <div className="d-flex justify-content-between align-items-end">
             <div className="text-white">
@@ -66,7 +66,7 @@ const TeacherDashboard = () => {
           <Col md={4}>
             <Card className="border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <Card.Body className="p-4 d-flex align-items-center gap-4">
-                    <div className="p-3 rounded-4" style={{ backgroundColor: '#6a41e615', color: '#6a41e6' }}>
+                    <div className="p-3 rounded-4" style={{ backgroundColor: '#7c5cff15', color: '#7c5cff' }}>
                         <BookOpen size={30} />
                     </div>
                     <div>
@@ -158,13 +158,13 @@ const TeacherDashboard = () => {
           transition: all 0.2s ease;
         }
         .admin-sidebar .nav-link:hover {
-          background-color: #6a41e60a;
-          color: #6a41e6;
+          background-color: #7c5cff15;
+          color: #7c5cff;
         }
         .admin-sidebar .nav-link.active {
-          background: linear-gradient(135deg, #6a41e6, #7c3aed) !important;
+          background: linear-gradient(135deg, #7c5cff, #6a41e6) !important;
           color: white !important;
-          box-shadow: 0 4px 15px rgba(106, 65, 230, 0.2);
+          box-shadow: 0 4px 15px rgba(124, 92, 255, 0.25);
         }
         .fw-800 { font-weight: 800; }
         .ls-1 { letter-spacing: 1px; }

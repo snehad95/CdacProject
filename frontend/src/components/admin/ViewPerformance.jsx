@@ -27,7 +27,7 @@ const ViewPerformance = () => {
         <Card.Body>
           <Row className="align-items-center">
             <Col md={6}>
-              <h4 className="fw-bold mb-0" style={{ color: '#6a41e6' }}>Student Performance Rankings</h4>
+              <h4 className="fw-bold mb-0" style={{ color: '#7c5cff' }}>Student Performance Rankings</h4>
             </Col>
             <Col md={6}>
               <Form.Select value={selectedExam} onChange={e => setSelectedExam(e.target.value)}>
@@ -58,7 +58,7 @@ const ViewPerformance = () => {
                   <tr key={r._id}>
                     <td className="fw-bold text-center">#{idx + 1}</td>
                     <td>{r.userId?.name || 'Unknown User'}</td>
-                    <td className="fw-bold" style={{ color: '#6a41e6' }}>{r.score} / {r.totalQuestions}</td>
+                    <td className="fw-bold" style={{ color: '#7c5cff' }}>{r.score} / {r.totalQuestions}</td>
                     <td>{r.attemptedQuestions || 0}</td>
                     <td>
                       {r.passed ? <span className="badge bg-success">PASS</span> : <span className="badge bg-danger">FAIL</span>}

@@ -3,6 +3,11 @@ import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const T = {
+  primary: '#7c5cff', primaryDeep: '#6a41e6', text: 'var(--cdac-text)',
+  muted: '#6b6483', border: 'var(--cdac-border)', surface: 'var(--cdac-surface)',
+};
+
 const RegisterModal = ({ show, handleClose }) => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
@@ -11,62 +16,76 @@ const RegisterModal = ({ show, handleClose }) => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
-    }
-    
+    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
     try {
-      await axios.post('http://localhost:5000/api/auth/register', { 
-        name: formData.name, 
-        email: formData.email, 
-        password: formData.password 
+      await axios.post('http://localhost:5000/api/auth/register', {
+        name: formData.name, email: formData.email, password: formData.password,
       });
       handleClose();
-      toast.success("Registration successful! Please login to continue.", { duration: 5000 });
+      toast.success('Registration successful! Please login to continue.', { duration: 5000 });
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }
   };
 
+  const inputStyle = { border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' };
+
   return (
-    <Modal show={show} onHide={handleClose} centered size="lg" backdropClassName="custom-backdrop-blur">
-      <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="fw-bold w-100 text-center" style={{ color: '#6a41e6' }}>Create an Account</Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="p-4 p-md-5">
-        {error && <div className="alert alert-danger p-2">{error}</div>}
-        <Form onSubmit={handleRegister}>
-          <Row>
-            <Col md={12} className="mb-3">
-              <Form.Group>
-                <Form.Label className="fw-semibold">Full Name</Form.Label>
-                <Form.Control type="text" name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} required />
-              </Form.Group>
-            </Col>
-            <Col md={12} className="mb-3">
-              <Form.Group>
-                <Form.Label className="fw-semibold">Email address</Form.Label>
-                <Form.Control type="email" name="email" placeholder="name@example.com" value={formData.email} onChange={handleChange} required />
-              </Form.Group>
-            </Col>
-            <Col md={6} className="mb-4">
-              <Form.Group>
-                <Form.Label className="fw-semibold">Password</Form.Label>
-                <Form.Control type="password" name="password" placeholder="Create a password" value={formData.password} onChange={handleChange} required minLength={6} />
-              </Form.Group>
-            </Col>
-            <Col md={6} className="mb-4">
-              <Form.Group>
-                <Form.Label className="fw-semibold">Confirm Password</Form.Label>
-                <Form.Control type="password" name="confirmPassword" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleChange} required />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Button className="w-100 py-2 fs-5 fw-bold shadow-sm text-white" type="submit" style={{ backgroundColor: '#6a41e6', border: 'none' }}>
-            Register Now
-          </Button>
-        </Form>
-      </Modal.Body>
+    <Modal show={show} onHide={handleClose} centered size="lg">
+      <div style={{ background: T.surface, borderRadius: 16, overflow: 'hidden', border: `1px solid ${T.border}` }}>
+        <div style={{ height: 6, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})` }} />
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold w-100 text-center" style={{ color: T.primaryDeep }}>
+            Create an Account
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4 p-md-5">
+          <p className="text-center mb-4" style={{ color: T.muted }}>Join CDAC ExamWeb and start practising today.</p>
+          {error && (
+            <div className="p-2 mb-3 rounded text-center"
+              style={{ background: '#fdecec', color: '#b42318', fontSize: 14 }}>{error}</div>
+          )}
+          <Form onSubmit={handleRegister}>
+            <Row>
+              <Col md={6} className="mb-3">
+                <Form.Group>
+                  <Form.Label className="fw-semibold" style={{ color: T.text }}>Full Name</Form.Label>
+                  <Form.Control name="name" placeholder="Your name" value={formData.name}
+                    onChange={handleChange} required style={inputStyle} />
+                </Form.Group>
+              </Col>
+              <Col md={6} className="mb-3">
+                <Form.Group>
+                  <Form.Label className="fw-semibold" style={{ color: T.text }}>Email address</Form.Label>
+                  <Form.Control type="email" name="email" placeholder="you@example.com"
+                    value={formData.email} onChange={handleChange} required style={inputStyle} />
+                </Form.Group>
+              </Col>
+              <Col md={6} className="mb-3">
+                <Form.Group>
+                  <Form.Label className="fw-semibold" style={{ color: T.text }}>Password</Form.Label>
+                  <Form.Control type="password" name="password" placeholder="Create a password"
+                    value={formData.password} onChange={handleChange} required minLength={6} style={inputStyle} />
+                </Form.Group>
+              </Col>
+              <Col md={6} className="mb-4">
+                <Form.Group>
+                  <Form.Label className="fw-semibold" style={{ color: T.text }}>Confirm Password</Form.Label>
+                  <Form.Control type="password" name="confirmPassword" placeholder="Confirm your password"
+                    value={formData.confirmPassword} onChange={handleChange} required style={inputStyle} />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Button className="w-100 py-2 fs-6 fw-bold text-white border-0" type="submit"
+              style={{
+                background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
+                borderRadius: 10, boxShadow: '0 8px 20px rgba(124,92,255,0.35)',
+              }}>
+              Register Now
+            </Button>
+          </Form>
+        </Modal.Body>
+      </div>
     </Modal>
   );
 };

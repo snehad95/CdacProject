@@ -30,7 +30,8 @@ const Contact = () => {
   };
 
   return (
-    <Container className="my-5">
+    <div style={{ backgroundColor: 'var(--cdac-bg)', minHeight: '100vh', paddingTop: '40px', paddingBottom: '40px' }}>
+    <Container>
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -42,7 +43,7 @@ const Contact = () => {
             <Card.Body className="p-5">
               <div className="overflow-hidden mb-4">
                 <motion.h2 
-                  className="text-center fw-bold mb-0" style={{ color: '#6a41e6' }}
+                  className="text-center fw-bold mb-0" style={{ color: '#7c5cff' }}
                   initial={{ opacity: 0, x: -100 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
@@ -110,7 +111,7 @@ const Contact = () => {
                     className="px-5 fw-semibold text-white" 
                     size="lg" 
                     type="submit" 
-                    style={{ backgroundColor: '#6a41e6', border: 'none' }}
+                    style={{ backgroundColor: '#7c5cff', border: 'none' }}
                     disabled={loading}
                   >
                     {loading ? 'Sending...' : 'Send Message'}
@@ -123,6 +124,7 @@ const Contact = () => {
       </Row>
       </motion.div>
     </Container>
+    </div>
   );
 };
 
