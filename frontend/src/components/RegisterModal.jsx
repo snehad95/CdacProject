@@ -18,11 +18,16 @@ const RegisterModal = ({ show, handleClose }) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
     try {
-      await axios.post('http://localhost:5000/api/auth/register', {
+      const res = await axios.post('http://localhost:5000/api/auth/register', {
         name: formData.name, email: formData.email, password: formData.password,
       });
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       handleClose();
-      toast.success('Registration successful! Please login to continue.', { duration: 5000 });
+      toast.success('Registration successful! Welcome to CDAC ExamWeb.', { duration: 3000 });
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }

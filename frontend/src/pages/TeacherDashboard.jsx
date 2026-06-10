@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Nav, Tab, Card } from 'react-bootstrap';
 import { 
   BarChart3, Users, BookOpen, HelpCircle, 
-  Settings, Info, LayoutDashboard, Database, ShieldCheck
+  Settings, Info, LayoutDashboard, Database, ShieldCheck, Award
 } from 'lucide-react';
 import ManageExams from '../components/admin/ManageExams';
 import ManageQuestions from '../components/admin/ManageQuestions';
 import ViewPerformance from '../components/admin/ViewPerformance';
 import ManageInstructions from '../components/admin/ManageInstructions';
 import ManagePracticeTests from '../components/admin/ManagePracticeTests';
+import ManageCertificates from '../components/admin/ManageCertificates';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -21,9 +22,11 @@ const TeacherDashboard = () => {
     if (user.role === 'teacher') {
       const fetchStats = async () => {
         try {
+          const token = localStorage.getItem('token');
+          const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
           const [examsRes, usersRes] = await Promise.all([
             axios.get('http://localhost:5000/api/exams'),
-            axios.get('http://localhost:5000/api/users')
+            axios.get('http://localhost:5000/api/users', config)
           ]);
           const totalStudents = usersRes.data.filter(u => u.role === 'student').length;
           setStats({ exams: examsRes.data.length, students: totalStudents, questions: 'Manage Tab' });
@@ -135,6 +138,11 @@ const TeacherDashboard = () => {
                         <BarChart3 size={20} /> <span className="d-lg-inline">Results</span>
                     </Nav.Link>
                   </Nav.Item>
+                  <Nav.Item>
+                    <Nav.Link eventKey="certificates" className="d-flex align-items-center gap-2 gap-lg-3 p-2 p-lg-3 rounded-3 fw-bold text-nowrap">
+                        <Award size={20} /> <span className="d-lg-inline">Certificates</span>
+                    </Nav.Link>
+                  </Nav.Item>
                 </Nav>
               </Card>
             </Col>
@@ -146,6 +154,7 @@ const TeacherDashboard = () => {
                 <Tab.Pane eventKey="questions"><ManageQuestions /></Tab.Pane>
                 <Tab.Pane eventKey="instructions"><ManageInstructions /></Tab.Pane>
                 <Tab.Pane eventKey="performance"><ViewPerformance /></Tab.Pane>
+                <Tab.Pane eventKey="certificates"><ManageCertificates /></Tab.Pane>
               </Tab.Content>
             </Col>
           </Row>

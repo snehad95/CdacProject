@@ -38,6 +38,7 @@ const ExamArena = () => {
   const [answers, setAnswers] = useState({});
   const answersRef = useRef({});
   const [timeLeft, setTimeLeft] = useState(0);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   const [violations, setViolations] = useState(0);
   const [warnMsg, setWarnMsg] = useState('');
@@ -144,11 +145,12 @@ const ExamArena = () => {
     const fetchExamData = async () => {
       try {
         try {
-          const checkRes = await axios.get(`http://localhost:5000/api/results/student/${user.id}`);
-          const hasAttempted = checkRes.data.some(r => r.examId._id === examId);
+          const token = localStorage.getItem('token');
+          const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+          const checkRes = await axios.get(`http://localhost:5000/api/results/student/${user.id}`, config);
+          const hasAttempted = checkRes.data.some(r => r.examId && r.examId._id === examId);
           if (hasAttempted) {
-            toast.error('🚫 Access Denied: You have already submitted this exam.', { duration: 5000 });
-            navigate('/dashboard');
+            setAlreadySubmitted(true);
             return;
           }
         } catch (err) { console.error("Result check failed", err); }
@@ -231,6 +233,64 @@ const ExamArena = () => {
   const progress = total > 0 ? (answered / total) * 100 : 0;
   const pct = timeLeft / ((exam?.durationMinutes ?? 1) * 60);
   const timerRed = pct < 0.15;
+
+  if (alreadySubmitted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f5f3ff 0%, #edd8ff 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        fontFamily: "'Segoe UI', system-ui, sans-serif"
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          borderRadius: 20,
+          boxShadow: '0 20px 40px rgba(124, 58, 237, 0.1)',
+          padding: '40px 32px',
+          maxWidth: 480,
+          width: '100%',
+          textAlign: 'center',
+          border: '1px solid #ede9fe'
+        }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: '50%',
+            backgroundColor: '#fee2e2', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px',
+            boxShadow: '0 8px 16px rgba(239, 68, 68, 0.15)'
+          }}>
+            <span style={{ fontSize: '2.5rem' }}>🚫</span>
+          </div>
+          <h3 style={{ color: '#1e1b4b', fontWeight: 800, marginBottom: 12 }}>Attempt Blocked</h3>
+          <p style={{ color: '#6b7280', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: 28 }}>
+            Our records show you have already submitted this exam. Only one attempt is permitted per student to maintain test integrity.
+          </p>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            style={{
+              padding: '12px 32px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'linear-gradient(135deg, #7c3aed, #6366f1)',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(124, 58, 237, 0.3)',
+              transition: 'transform 0.2s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!exam) {
     return (

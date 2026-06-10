@@ -17,7 +17,9 @@ const StudentReport = () => {
 
   const fetchStudents = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5000/api/users');
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const { data } = await axios.get('http://localhost:5000/api/users', config);
       // Filter for students only
       setStudents(data.filter(u => u.role === 'student'));
       setLoading(false);
@@ -31,7 +33,9 @@ const StudentReport = () => {
     setSelectedStudent(student);
     setDetailsLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:5000/api/results/student/${student._id}`);
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const { data } = await axios.get(`http://localhost:5000/api/results/student/${student._id}`, config);
       setStudentResults(data);
     } catch (err) {
       console.error(err);

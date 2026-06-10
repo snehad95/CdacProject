@@ -25,7 +25,13 @@ const AppNavbar = () => {
     navigate('/');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path.startsWith('/#')) {
+      return location.pathname === '/' && location.hash === path.substring(1);
+    }
+    return location.pathname === path && !location.hash;
+  };
+  
   const navStyle = (path) => ({
     color: isActive(path) ? T.primaryDeep : T.text,
     fontWeight: isActive(path) ? 700 : 600,
@@ -33,6 +39,29 @@ const AppNavbar = () => {
     position: 'relative',
     padding: '6px 4px',
   });
+
+  const handleNavClick = (e, to) => {
+    if (to.startsWith('/#')) {
+      e.preventDefault();
+      const id = to.substring(2);
+      if (location.pathname === '/') {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          window.history.pushState(null, '', to);
+        }
+      } else {
+        navigate('/');
+        setTimeout(() => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+            window.history.pushState(null, '', to);
+          }
+        }, 300);
+      }
+    }
+  };
 
   return (
     <>
@@ -53,17 +82,31 @@ const AppNavbar = () => {
                 { to: '/courses', label: 'Courses' },
                 { to: '/about', label: 'About Us' },
                 { to: '/contact', label: 'Contact Us' },
-              ].map((item) => (
-                <Nav.Link key={item.to} as={Link} to={item.to} style={navStyle(item.to)}>
-                  {item.label}
-                  {isActive(item.to) && (
-                    <span style={{
-                      position: 'absolute', left: 0, right: 0, bottom: -4, height: 2,
-                      borderRadius: 2, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})`,
-                    }} />
-                  )}
-                </Nav.Link>
-              ))}
+              ].map((item) => {
+                const isAnchor = item.to.startsWith('/#');
+                return (
+                  <Nav.Link 
+                    key={item.to} 
+                    as={isAnchor ? 'a' : Link} 
+                    to={isAnchor ? undefined : item.to}
+                    href={isAnchor ? item.to : undefined}
+                    onClick={(e) => {
+                      if (isAnchor) {
+                        handleNavClick(e, item.to);
+                      }
+                    }}
+                    style={navStyle(item.to)}
+                  >
+                    {item.label}
+                    {isActive(item.to) && (
+                      <span style={{
+                        position: 'absolute', left: 0, right: 0, bottom: -4, height: 2,
+                        borderRadius: 2, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})`,
+                      }} />
+                    )}
+                  </Nav.Link>
+                );
+              })}
               {user?.role === 'admin' && (
                 <Nav.Link as={Link} to="/admin" className="fw-bold" style={{ color: '#e11d48' }}>Admin Panel</Nav.Link>
               )}

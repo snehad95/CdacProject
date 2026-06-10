@@ -36,19 +36,31 @@ function LayoutShell({ children }) {
   const isFullscreen = FULLSCREEN_ROUTES.some(r => pathname.startsWith(r));
   const isHome = pathname === '/';
   const isTest = pathname === '/test';
+  const isAdmin = pathname.startsWith('/admin');
+  const isUserLoggedIn = !!localStorage.getItem('token');
+
+  // Disable navbar auto-hiding on dashboard and panels
+  const disableNavbarHide = pathname === '/dashboard' || isAdmin || pathname.startsWith('/teacher');
+
   const [navbarVisible, setNavbarVisible] = React.useState(true);
   const footerRef = React.useRef(null);
 
   React.useEffect(() => {
     const storedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-bs-theme', storedTheme);
+    
+    if (disableNavbarHide) {
+      setNavbarVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(([entry]) => {
       // Hide navbar when footer is visible, show when footer is out of view
       setNavbarVisible(!entry.isIntersecting);
     }, { rootMargin: '0px', threshold: 0.1 });
     if (footerRef.current) observer.observe(footerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [disableNavbarHide]);
 
   if (isFullscreen) return <>{children}</>;
 
@@ -57,20 +69,35 @@ function LayoutShell({ children }) {
       {/* Header: only on home page */}
       {isHome && <Header />}
 
-      {/* Navbar: always present */}
-      <div
-        className="sticky-top bg-white shadow-sm"
-        style={{
-          zIndex: 1000,
-          transform: navbarVisible ? 'translateY(0)' : 'translateY(-100%)',
-          transition: 'transform 0.35s ease-in-out',
-        }}
-      >
-        <AppNavbar />
-      </div>
+      {/* Navbar: always present except commented out on Admin Panel */}
+      {!isAdmin ? (
+        <div
+          className="sticky-top bg-white shadow-sm"
+          style={{
+            zIndex: 1000,
+            transform: navbarVisible ? 'translateY(0)' : 'translateY(-100%)',
+            transition: 'transform 0.35s ease-in-out',
+          }}
+        >
+          <AppNavbar />
+        </div>
+      ) : (
+        /* Commented out Admin Panel top navbar to prevent duplicate navigation
+        <div className="sticky-top bg-white shadow-sm" style={{ zIndex: 1000 }}>
+          <AppNavbar />
+        </div>
+        */
+        null
+      )}
 
       <main className="flex-grow-1">{children}</main>
-      {!isTest && <div ref={footerRef}><Footer /></div>}
+      
+      {/* Footer: Hidden for all authenticated users, only on public-facing pages before login */}
+      {!isTest && !isUserLoggedIn && (
+        <div ref={footerRef}>
+          <Footer />
+        </div>
+      )}
     </div>
   );
 }

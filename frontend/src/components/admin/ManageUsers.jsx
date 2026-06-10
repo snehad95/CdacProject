@@ -12,7 +12,9 @@ const ManageUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users');
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await axios.get('http://localhost:5000/api/users', config);
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -46,7 +48,9 @@ const ManageUsers = () => {
 
   const handleChangeRole = async (userId, newRole) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${userId}/role`, { role: newRole });
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      await axios.put(`http://localhost:5000/api/users/${userId}/role`, { role: newRole }, config);
       fetchUsers();
       toast.success(`User role updated to ${newRole}`);
     } catch (error) {

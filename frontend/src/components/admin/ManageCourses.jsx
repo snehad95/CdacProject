@@ -209,7 +209,7 @@ const ManageCourses = () => {
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
       <Card.Header className="bg-white p-4 d-flex justify-content-between align-items-center border-bottom">
         <h4 className="mb-0 fw-bold">Manage Courses</h4>
-        <Button variant="primary" className="fw-bold" onClick={() => handleShow()}>
+        <Button className="fw-bold text-white border-0" style={{ background: 'linear-gradient(135deg, #7c5cff, #6a41e6)', borderRadius: '10px', boxShadow: '0 4px 12px rgba(124,92,255,0.2)' }} onClick={() => handleShow()}>
           <Plus size={18} className="me-2" /> Add New Course
         </Button>
       </Card.Header>
@@ -227,7 +227,24 @@ const ManageCourses = () => {
             {courses.map((course) => (
               <tr key={course._id}>
                 <td className="px-4 py-3 fw-bold">{course.title}</td>
-                <td><Badge bg="info" style={{ backgroundColor: course.categoryBgColor }}>{course.category}</Badge></td>
+                <td>
+                  <span 
+                    style={{ 
+                      backgroundColor: '#f3e8ff', 
+                      color: '#7e22ce',
+                      padding: '6px 12px',
+                      borderRadius: '12px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      letterSpacing: '0.5px',
+                      border: '1px solid #e9d5ff',
+                      display: 'inline-block',
+                      boxShadow: '0 2px 4px rgba(124,58,237,0.05)'
+                    }}
+                  >
+                    {course.category}
+                  </span>
+                </td>
                 <td>{course.abbr}</td>
                 <td className="text-end px-4">
                   <Button variant="link" className="text-primary p-0 me-3" onClick={() => handleShow(course)}><Edit size={18} /></Button>
@@ -264,22 +281,58 @@ const ManageCourses = () => {
                         <Form.Control name="fullName" value={formData.fullName} onChange={handleChange} required />
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
+                    <Col md={3}>
                       <Form.Group>
                         <Form.Label>Category</Form.Label>
                         <Form.Control name="category" value={formData.category} onChange={handleChange} required />
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
+                    <Col md={3}>
                       <Form.Group>
                         <Form.Label>Abbreviation (e.g. AC)</Form.Label>
                         <Form.Control name="abbr" value={formData.abbr} onChange={handleChange} required />
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
+                    <Col md={3}>
                       <Form.Group>
-                        <Form.Label>Icon Color Hex</Form.Label>
-                        <Form.Control name="iconColor" value={formData.iconColor} onChange={handleChange} />
+                        <Form.Label>Icon Color</Form.Label>
+                        <div className="d-flex gap-2">
+                          <Form.Control
+                            type="color"
+                            name="iconColor"
+                            value={formData.iconColor || '#2a6ce4'}
+                            onChange={handleChange}
+                            style={{ width: '46px', height: '38px', padding: '2px', flexShrink: 0 }}
+                          />
+                          <Form.Control
+                            type="text"
+                            name="iconColor"
+                            value={formData.iconColor}
+                            onChange={handleChange}
+                            placeholder="#2a6ce4"
+                          />
+                        </div>
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group>
+                        <Form.Label>Category Bg Color</Form.Label>
+                        <div className="d-flex gap-2">
+                          <Form.Control
+                            type="color"
+                            name="categoryBgColor"
+                            value={formData.categoryBgColor || '#f8a39a'}
+                            onChange={handleChange}
+                            style={{ width: '46px', height: '38px', padding: '2px', flexShrink: 0 }}
+                          />
+                          <Form.Control
+                            type="text"
+                            name="categoryBgColor"
+                            value={formData.categoryBgColor}
+                            onChange={handleChange}
+                            placeholder="#f8a39a"
+                          />
+                        </div>
                       </Form.Group>
                     </Col>
                     <Col md={12}>

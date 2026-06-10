@@ -5,12 +5,16 @@ import {
   User, ChevronLeft, ChevronRight, X, LayoutGrid,
   CheckCircle2, HelpCircle, ArrowRight, Circle, Dot
 } from 'lucide-react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const PracticeArena = () => {
   const { category } = useParams();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isPaletteOpen, setIsPaletteOpen] = useState(true);
@@ -25,23 +29,39 @@ const PracticeArena = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [questions] = useState(
-    Array.from({ length: 20 }, (_, i) => ({
-      id: i + 1,
-      text: `Practice Question ${i + 1} for ${decodeURIComponent(category || 'General')}: Which of the following best describes the core concept of this topic?`,
-      options: [
-        "A standard definition of the concept.",
-        "An alternative approach to the problem.",
-        "The most efficient implementation method.",
-        "None of the above options are correct."
-      ],
-      correct: 0
-    }))
-  );
-
   useEffect(() => {
-    if (!localStorage.getItem('token')) navigate('/test');
-  }, [navigate]);
+    if (!localStorage.getItem('token')) {
+      navigate('/test');
+      return;
+    }
+
+    const loadQuestions = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('http://localhost:5000/api/practice-tests');
+        const practiceTest = res.data.find(t => t.title === decodeURIComponent(category));
+        if (!practiceTest) {
+          toast.error("Practice test category not found");
+          setLoading(false);
+          return;
+        }
+
+        const token = localStorage.getItem('token');
+        const qRes = await axios.get(`http://localhost:5000/api/questions/practice-test/${practiceTest._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setQuestions(qRes.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading practice questions", err);
+        toast.error("Failed to load questions");
+        setLoading(false);
+      }
+    };
+
+    loadQuestions();
+  }, [category, navigate]);
 
   const handleOptionClick = (optIdx) => {
     setAnswers({ ...answers, [currentIdx]: optIdx });
@@ -55,7 +75,10 @@ const PracticeArena = () => {
 
   const calculateScore = () => {
     let score = 0;
-    questions.forEach((q, i) => { if (answers[i] === q.correct) score++; });
+    questions.forEach((q, i) => {
+      const correctIdx = q.options.findIndex(o => o.isCorrect);
+      if (answers[i] === correctIdx) score++;
+    });
     return score;
   };
 
@@ -76,6 +99,31 @@ const PracticeArena = () => {
     setShowSubmitModal(false);
     setShowResult(true);
   };
+
+  if (loading) {
+    return (
+      <div style={{ ...styles.pageWrap, alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--cdac-text-muted)', fontWeight: 500 }}>Loading practice session...</p>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div style={{ ...styles.pageWrap, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
+          <HelpCircle size={48} color="#7c5cff" className="mb-3" />
+          <h3 style={{ fontWeight: 700, marginBottom: 8 }}>No Questions Available</h3>
+          <p style={{ color: 'var(--cdac-text-muted)', fontSize: 14, marginBottom: 24 }}>
+            There are no questions explicitly added to this practice test category yet. Please check back later or contact your administrator.
+          </p>
+          <button style={styles.backBtn} onClick={() => navigate('/test')}>
+            Back to Test Portal
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const isMobile = windowWidth < 900;
   const attemptedCount = Object.keys(answers).length;
@@ -211,7 +259,7 @@ const PracticeArena = () => {
                   }}>
                     {String.fromCharCode(65 + i)}
                   </div>
-                  <span style={{ color: selected ? '#1e1b4b' : '#1f2937' }}>{opt}</span>
+                  <span style={{ color: selected ? '#1e1b4b' : '#1f2937' }}>{opt.text}</span>
                   {selected && <CheckCircle2 size={18} color="#7c5cff" style={{ marginLeft: 'auto', flexShrink: 0 }} />}
                 </motion.button>
               );

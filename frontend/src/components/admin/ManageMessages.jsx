@@ -4,23 +4,22 @@ import { Trash2, Mail, Calendar, User } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const ManageMessages = () => {
+const ManageMessages = ({ onMessagesChange }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const fetchMessages = async () => {
     try {
-      const storedUser = localStorage.getItem('user');
-      const user = storedUser ? JSON.parse(storedUser) : null;
-      if (!user?.token) {
+      const token = localStorage.getItem('token');
+      if (!token) {
         setLoading(false);
         return;
       }
 
       const config = {
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${token}`,
         },
       };
       const { data } = await axios.get('http://localhost:5000/api/contact', config);
@@ -38,13 +37,12 @@ const ManageMessages = () => {
 
   const deleteHandler = async (id) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
-      const storedUser = localStorage.getItem('user');
-      const user = storedUser ? JSON.parse(storedUser) : null;
-      if (!user?.token) return;
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
       const config = {
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${token}`,
         },
       };
       
@@ -52,6 +50,9 @@ const ManageMessages = () => {
         await axios.delete(`http://localhost:5000/api/contact/${id}`, config);
         setMessages(messages.filter((m) => m._id !== id));
         toast.success('Message deleted');
+        if (onMessagesChange) {
+          onMessagesChange();
+        }
       } catch (err) {
         toast.error('Failed to delete message');
       }

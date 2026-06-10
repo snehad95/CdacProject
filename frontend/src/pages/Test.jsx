@@ -160,13 +160,13 @@ const Test = () => {
           transition={{ duration: 0.7, ease: 'easeOut' }}
           className="text-center mb-5"
         >
-          <span style={{
+          {/* <span style={{
             display: 'inline-block', padding: '6px 14px', borderRadius: 999,
             background: '#efe9ff', color: T.primaryDeep, fontSize: 12, fontWeight: 700,
             letterSpacing: 1.5, marginBottom: 14,
           }}>
             PRACTICE LIBRARY
-          </span>
+          </span> */}
           <h2 className="fw-bolder mb-2" style={{ color: T.text, letterSpacing: -0.5 }}>
             All Exam Categories
           </h2>

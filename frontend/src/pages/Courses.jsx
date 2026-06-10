@@ -76,26 +76,13 @@ const Courses = () => {
             color: 'var(--cdac-text-muted)',
             textTransform: 'uppercase',
             marginBottom: '12px',
-            fontFamily: "'Inter', sans-serif"
           }}>
             Explore Programmes
           </div>
-          <h1 style={{
-            fontSize: '38px',
-            fontWeight: 800,
-            color: 'var(--cdac-text)',
-            letterSpacing: '-0.02em',
-            fontFamily: "'Inter', sans-serif",
-            marginBottom: '8px'
-          }}>
+          <h2 className="fw-bolder mb-2" style={{ color: 'var(--cdac-text)', letterSpacing: -0.5 }}>
             Post Graduate Certificate Programmes
-          </h1>
-          <p style={{
-            fontSize: '16px',
-            color: 'var(--cdac-text-muted)',
-            maxWidth: '640px',
-            fontFamily: "'Inter', sans-serif"
-          }}>
+          </h2>
+          <p className="mb-0" style={{ color: '#6b6483', maxWidth: '640px' }}>
             Industry-aligned certifications crafted to accelerate your career in tech.
           </p>
         </motion.div>
