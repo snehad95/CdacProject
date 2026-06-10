@@ -39,3 +39,12 @@ export const admin = (req, res, next) => {
     res.status(403).json({ message: 'Not authorized as admin' });
   }
 };
+
+// Teacher or Admin guard - must be used after protect
+export const teacherOrAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'teacher' || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized as teacher or admin' });
+  }
+};

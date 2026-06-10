@@ -1,10 +1,10 @@
 import Exam from '../models/Exam.js';
+import Question from '../models/Question.js';
 
 export const createExam = async (req, res) => {
   try {
-    const { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished } = req.body;
+    const { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished, negativeMarking, negativeMarks, questions } = req.body;
     
-    // Verify times are valid dates
     if (new Date(startTime) >= new Date(endTime)) {
       return res.status(400).json({ message: "End time must be after start time." });
     }
@@ -18,10 +18,25 @@ export const createExam = async (req, res) => {
       durationMinutes,
       passingScore,
       resultsPublished: resultsPublished || false,
-      createdBy: req.userId || '000000000000000000000000' // Placeholder until secure auth middleware
+      negativeMarking: negativeMarking || false,
+      negativeMarks: negativeMarks || 0,
+      createdBy: req.user?._id || '000000000000000000000000'
     });
 
     await newExam.save();
+
+    if (questions && questions.length > 0) {
+      const questionsToInsert = questions.map(q => ({
+        examId: newExam._id,
+        text: q.text,
+        options: q.options
+      }));
+      await Question.insertMany(questionsToInsert);
+      
+      newExam.totalMarks = questions.length;
+      await newExam.save();
+    }
+
     res.status(201).json(newExam);
   } catch (error) {
     res.status(500).json({ message: error.message });

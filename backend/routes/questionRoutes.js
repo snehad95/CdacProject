@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
-import { addQuestion, getQuestionsByExam, deleteQuestion } from '../controllers/questionController.js';
+import { addQuestion, getQuestionsByExam, getQuestionsByPracticeTest, addQuestionsBulk, deleteQuestion } from '../controllers/questionController.js';
+import { protect, teacherOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -14,8 +15,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-router.post('/', upload.single('image'), addQuestion);
-router.get('/exam/:examId', getQuestionsByExam);
-router.delete('/:id', deleteQuestion);
+router.post('/', protect, teacherOrAdmin, upload.single('image'), addQuestion);
+router.post('/bulk', protect, teacherOrAdmin, addQuestionsBulk);
+router.get('/exam/:examId', protect, getQuestionsByExam);
+router.get('/practice-test/:practiceTestId', protect, getQuestionsByPracticeTest);
+router.delete('/:id', protect, teacherOrAdmin, deleteQuestion);
 
 export default router;

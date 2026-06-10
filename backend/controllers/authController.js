@@ -13,7 +13,21 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await User.create({ name, email, password: hashedPassword, role });
 
-    res.status(201).json({ message: "User registered successfully", user: { id: result._id, email: result.email, role: result.role, name: result.name } });
+    const sessionId = crypto.randomBytes(16).toString('hex');
+    result.sessionId = sessionId;
+    await result.save();
+
+    const token = jwt.sign(
+      { email: result.email, id: result._id, role: result.role, name: result.name, sessionId },
+      process.env.JWT_SECRET || 'test_secret',
+      { expiresIn: "5h" }
+    );
+
+    res.status(201).json({ 
+      message: "User registered successfully", 
+      user: { id: result._id, email: result.email, role: result.role, name: result.name },
+      token
+    });
   } catch (error) {
     res.status(500).json({ message: "Something went wrong.", error: error.message });
   }

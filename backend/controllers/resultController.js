@@ -68,7 +68,7 @@ export const getResultsByStudent = async (req, res) => {
 
     // Attach dynamically calculated rank for each submitted exam (Only for passed students)
     const rankedResults = await Promise.all(results.map(async (r) => {
-      if (!r.passed) {
+      if (!r.passed || !r.examId) {
         r.rank = 'N/A';
         return r;
       }
@@ -96,6 +96,7 @@ export const getResultsByExam = async (req, res) => {
     // For admin report: show all results, but indicate rank for passed ones
     const results = await Result.find({ examId })
       .populate('userId', 'name email')
+      .populate('examId', 'title')
       .sort({ score: -1, submittedAt: 1 });
     res.status(200).json(results);
   } catch (error) {

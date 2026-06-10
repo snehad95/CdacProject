@@ -11,6 +11,8 @@ import userRoutes from './routes/userRoutes.js';
 import practiceTestRoutes from './routes/practiceTestRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
+import testimonialRoutes from './routes/testimonialRoutes.js';
+import certificateRoutes from './routes/certificateRoutes.js';
 
 dotenv.config();
 
@@ -32,6 +34,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/practice-tests', practiceTestRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/certificates', certificateRoutes);
 
 app.get('/', (req, res) => {
   res.send('CDAC ExamWeb API is running...');

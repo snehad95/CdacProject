@@ -1,7 +1,8 @@
 import express from 'express';
 import multer from 'multer';
 import PracticeTest from '../models/PracticeTest.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import Question from '../models/Question.js';
+import { protect, teacherOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
 
 // @desc    Create a practice test
 // @route   POST /api/practice-tests
-router.post('/', protect, upload.single('image'), async (req, res) => {
+router.post('/', protect, teacherOrAdmin, upload.single('image'), async (req, res) => {
   try {
     const { title, description } = req.body;
     let imagePath = '';
@@ -46,6 +47,19 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
       createdBy: req.user._id
     });
     const created = await test.save();
+
+    if (req.body.questions) {
+      const parsedQuestions = typeof req.body.questions === 'string' ? JSON.parse(req.body.questions) : req.body.questions;
+      if (parsedQuestions && parsedQuestions.length > 0) {
+        const questionsToInsert = parsedQuestions.map(q => ({
+          practiceTestId: created._id,
+          text: q.text,
+          options: q.options
+        }));
+        await Question.insertMany(questionsToInsert);
+      }
+    }
+
     res.status(201).json(created);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -54,7 +68,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
 // @desc    Update a practice test
 // @route   PUT /api/practice-tests/:id
-router.put('/:id', protect, upload.single('image'), async (req, res) => {
+router.put('/:id', protect, teacherOrAdmin, upload.single('image'), async (req, res) => {
   try {
     const test = await PracticeTest.findById(req.params.id);
     if (!test) return res.status(404).json({ message: 'Not found' });
@@ -73,7 +87,7 @@ router.put('/:id', protect, upload.single('image'), async (req, res) => {
 });
 
 // @desc    Delete a practice test
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, teacherOrAdmin, async (req, res) => {
   try {
     const test = await PracticeTest.findById(req.params.id);
     if (!test) return res.status(404).json({ message: 'Not found' });

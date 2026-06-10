@@ -3,10 +3,9 @@ import Exam from '../models/Exam.js';
 
 export const addQuestion = async (req, res) => {
   try {
-    const { examId, text, options } = req.body;
+    const { examId, practiceTestId, text, options } = req.body;
     let imageUrl = null;
     
-    // Check if an image was uploaded via Multer
     if (req.file) {
       imageUrl = `/uploads/${req.file.filename}`;
     }
@@ -14,7 +13,8 @@ export const addQuestion = async (req, res) => {
     const parsedOptions = typeof options === 'string' ? JSON.parse(options) : options;
 
     const newQuestion = new Question({
-      examId,
+      examId: examId || undefined,
+      practiceTestId: practiceTestId || undefined,
       text,
       options: parsedOptions,
       imageUrl
@@ -22,9 +22,10 @@ export const addQuestion = async (req, res) => {
 
     await newQuestion.save();
 
-    // Auto-update totalMarks on the parent exam (1 mark per question)
-    const questionCount = await Question.countDocuments({ examId });
-    await Exam.findByIdAndUpdate(examId, { totalMarks: questionCount });
+    if (examId) {
+      const questionCount = await Question.countDocuments({ examId });
+      await Exam.findByIdAndUpdate(examId, { totalMarks: questionCount });
+    }
 
     res.status(201).json(newQuestion);
   } catch (error) {
@@ -42,15 +43,54 @@ export const getQuestionsByExam = async (req, res) => {
   }
 };
 
+export const getQuestionsByPracticeTest = async (req, res) => {
+  try {
+    const { practiceTestId } = req.params;
+    const questions = await Question.find({ practiceTestId });
+    res.status(200).json(questions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const addQuestionsBulk = async (req, res) => {
+  try {
+    const { examId, practiceTestId, questions } = req.body;
+
+    if (!examId && !practiceTestId) {
+      return res.status(400).json({ message: "Target examId or practiceTestId is required." });
+    }
+
+    const parsedQuestions = questions.map(q => ({
+      examId: examId || undefined,
+      practiceTestId: practiceTestId || undefined,
+      text: q.text,
+      options: q.options
+    }));
+
+    const inserted = await Question.insertMany(parsedQuestions);
+
+    if (examId) {
+      const questionCount = await Question.countDocuments({ examId });
+      await Exam.findByIdAndUpdate(examId, { totalMarks: questionCount });
+    }
+
+    res.status(201).json(inserted);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const deleteQuestion = async (req, res) => {
   try {
     const { id } = req.params;
     const question = await Question.findByIdAndDelete(id);
     if (!question) return res.status(404).json({ message: "Question not found" });
 
-    // Auto-update totalMarks on the parent exam
-    const questionCount = await Question.countDocuments({ examId: question.examId });
-    await Exam.findByIdAndUpdate(question.examId, { totalMarks: questionCount });
+    if (question.examId) {
+      const questionCount = await Question.countDocuments({ examId: question.examId });
+      await Exam.findByIdAndUpdate(question.examId, { totalMarks: questionCount });
+    }
 
     res.status(200).json({ message: "Question deleted successfully" });
   } catch (error) {

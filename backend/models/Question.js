@@ -4,7 +4,12 @@ const questionSchema = new mongoose.Schema({
   examId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Exam',
-    required: true,
+    required: false,
+  },
+  practiceTestId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PracticeTest',
+    required: false,
   },
   text: {
     type: String,

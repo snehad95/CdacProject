@@ -15,7 +15,8 @@ mongoose.connect(MONGO_URI)
     await User.findOneAndUpdate(
       { email: 'admin@admin.com' },
       {
-        name: 'Super Admin',
+        // name: 'Super Admin',
+        name: 'Admin',
         email: 'admin@admin.com',
         password: hashedPassword,
         role: 'admin'
