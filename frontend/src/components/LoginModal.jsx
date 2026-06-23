@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const T = {
   primary: '#7c5cff', primaryDeep: '#6a41e6', text: 'var(--cdac-text)',
@@ -8,6 +9,7 @@ const T = {
 };
 
 const LoginModal = ({ show, handleClose }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,7 +20,20 @@ const LoginModal = ({ show, handleClose }) => {
       const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      window.location.reload();
+      handleClose();
+      
+      const role = res.data.user.role;
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'teacher') {
+        navigate('/teacher');
+      } else {
+        navigate('/dashboard');
+      }
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }

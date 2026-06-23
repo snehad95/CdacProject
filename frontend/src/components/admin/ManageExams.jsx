@@ -275,7 +275,10 @@ const ManageExams = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this exam? This cannot be undone.')) {
       try {
-        await axios.delete(`http://localhost:5000/api/exams/${id}`);
+        const token = localStorage.getItem('token');
+        await axios.delete(`http://localhost:5000/api/exams/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         fetchExams();
         toast.success('Exam deleted successfully');
       } catch (err) {
@@ -306,7 +309,10 @@ const ManageExams = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/exams/${editId}`, editData);
+      const token = localStorage.getItem('token');
+      await axios.put(`http://localhost:5000/api/exams/${editId}`, editData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setShowEdit(false);
       fetchExams();
       toast.success('✅ Exam updated successfully!');

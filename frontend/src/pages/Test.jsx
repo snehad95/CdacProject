@@ -123,7 +123,7 @@ const TestCard = ({ cat, scrollDirection, onQuizClick }) => {
 const Test = () => {
   const navigate = useNavigate();
   const scrollDirection = useScrollDirection();
-  const [categories, setCategories] = useState(ALL_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [showPrompt, setShowPrompt] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -134,12 +134,13 @@ const Test = () => {
         const res = await axios.get('http://localhost:5000/api/practice-tests');
         if (res.data.length > 0) {
           const dbCats = res.data.map(t => ({ title: t.title, desc: t.description, img: t.image }));
-          const existingTitles = ALL_CATEGORIES.map(c => c.title);
-          const uniqueDbCats = dbCats.filter(db => !existingTitles.includes(db.title));
-          setCategories([...ALL_CATEGORIES, ...uniqueDbCats]);
+          setCategories(dbCats);
+        } else {
+          setCategories(ALL_CATEGORIES);
         }
       } catch (err) {
         console.error('Failed to fetch practice tests', err);
+        setCategories(ALL_CATEGORIES);
       }
     })();
   }, []);

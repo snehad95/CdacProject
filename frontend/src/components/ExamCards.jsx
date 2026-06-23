@@ -24,7 +24,7 @@ const ExamCards = () => {
     else navigate(`/practice-instructions/${encodeURIComponent(categoryTitle)}`);
   };
 
-  const [categories, setCategories] = useState([
+  const defaultCategories = [
     { title: 'Programming', desc: 'Test coding knowledge in different programming languages.', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=500' },
     { title: 'Quantitative Aptitude', desc: 'Improve mathematical and logical problem solving skills.', img: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=500' },
     { title: 'Logical Reasoning', desc: 'Develop analytical and thinking ability.', img: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&q=80&w=500' },
@@ -33,7 +33,9 @@ const ExamCards = () => {
     { title: 'Technical Subjects', desc: 'Prepare technical concepts for placements and exams.', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=500' },
     { title: 'Computer Fundamentals', desc: 'Test your basic knowledge of computer hardware and software.', img: 'https://images.unsplash.com/photo-1547394765-185e1e68f34e?auto=format&fit=crop&q=80&w=500' },
     { title: 'Data Structures', desc: 'Assess your understanding of arrays, trees, graphs, and algorithms.', img: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&q=80&w=500' },
-  ]);
+  ];
+
+  const [categories, setCategories] = useState(defaultCategories);
 
   useEffect(() => {
     (async () => {
@@ -41,15 +43,12 @@ const ExamCards = () => {
         const res = await axios.get('http://localhost:5000/api/practice-tests');
         if (res.data.length > 0) {
           const dbCats = res.data.map(t => ({ title: t.title, desc: t.description, img: t.image }));
-          const baseTitles = categories.map(c => c.title);
-          const newOnes = dbCats.filter(d => !baseTitles.includes(d.title));
-          setCategories(prev => [...prev, ...newOnes]);
+          setCategories(dbCats);
         }
       } catch (err) {
         console.error('Home test fetch err', err);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

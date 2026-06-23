@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Navbar, Nav, Container, Button, Modal, Form } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { User } from 'lucide-react';
 import LoginModal from './LoginModal';
 import RegisterModal from './RegisterModal';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
 
 const T = {
   surface: 'var(--cdac-surface)', primary: '#7c5cff', primaryDeep: '#6a41e6',
@@ -18,6 +21,40 @@ const AppNavbar = () => {
 
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileData, setProfileData] = useState({ name: '', email: '', password: '' });
+
+  useEffect(() => {
+    if (showProfile && user) {
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        password: ''
+      });
+    }
+  }, [showProfile]);
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+      const res = await axios.put('http://localhost:5000/api/users/profile', profileData, config);
+      
+      const updatedUser = { ...user, name: res.data.name, email: res.data.email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast.success("Profile updated successfully!");
+      setShowProfile(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update profile");
+    }
+  };
+
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -120,8 +157,12 @@ const AppNavbar = () => {
             <div className="d-flex gap-2 align-items-center">
               {token ? (
                 <>
-                  <div className="d-flex align-items-center me-3"
-                    style={{ background: '#f5f1ff', border: `1px solid ${T.border}`, borderRadius: 999, padding: '4px 12px 4px 4px' }}>
+                  <div 
+                    onClick={() => setShowProfile(true)}
+                    className="d-flex align-items-center me-3"
+                    style={{ background: '#f5f1ff', border: `1px solid ${T.border}`, borderRadius: 999, padding: '4px 12px 4px 4px', cursor: 'pointer' }}
+                    title="Edit Profile"
+                  >
                     <div style={{
                       width: 30, height: 30, borderRadius: '50%',
                       background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
@@ -133,6 +174,7 @@ const AppNavbar = () => {
                       {JSON.parse(localStorage.getItem('user') || '{}').name || 'User'}
                     </span>
                   </div>
+
                   <Button onClick={handleLogout} className="fw-semibold px-3"
                     style={{ background: 'transparent', border: `2px solid ${T.primaryDeep}`, color: T.primaryDeep, borderRadius: 10 }}>
                     Logout
@@ -158,6 +200,71 @@ const AppNavbar = () => {
 
       <LoginModal show={showLogin} handleClose={() => setShowLogin(false)} />
       <RegisterModal show={showRegister} handleClose={() => setShowRegister(false)} />
+
+      <Modal show={showProfile} onHide={() => setShowProfile(false)} centered>
+        <div style={{ background: T.surface, borderRadius: 16, overflow: 'hidden', border: `1px solid ${T.border}` }}>
+          <div style={{ height: 6, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})` }} />
+          <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fw-bold w-100 text-center" style={{ color: T.primaryDeep }}>
+              Edit Profile
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="p-4 p-md-5">
+            <Form onSubmit={handleProfileUpdate}>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold" style={{ color: T.text }}>Full Name</Form.Label>
+                <Form.Control 
+                  type="text" 
+                  value={profileData.name} 
+                  onChange={e => setProfileData({ ...profileData, name: e.target.value })} 
+                  required
+                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} 
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold" style={{ color: T.text }}>Email Address</Form.Label>
+                <Form.Control 
+                  type="email" 
+                  value={profileData.email} 
+                  onChange={e => setProfileData({ ...profileData, email: e.target.value })} 
+                  required
+                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} 
+                />
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-semibold" style={{ color: T.text }}>New Password (leave blank to keep current)</Form.Label>
+                <Form.Control 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={profileData.password} 
+                  onChange={e => setProfileData({ ...profileData, password: e.target.value })} 
+                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} 
+                />
+              </Form.Group>
+              <div className="d-flex gap-2">
+                <Button 
+                  variant="light" 
+                  className="w-50 py-2 fw-bold" 
+                  onClick={() => setShowProfile(false)}
+                  style={{ borderRadius: 10, border: `1px solid ${T.border}` }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  className="w-50 py-2 fw-bold text-white border-0" 
+                  type="submit"
+                  style={{
+                    background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
+                    borderRadius: 10, boxShadow: '0 8px 20px rgba(124,92,255,0.35)',
+                  }}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </Form>
+          </Modal.Body>
+        </div>
+      </Modal>
     </>
   );
 };

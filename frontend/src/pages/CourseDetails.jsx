@@ -169,15 +169,15 @@ const CourseDetails = () => {
                     <Card.Body className="p-4">
                       <h5 className="fw-bold mb-4" style={{ color: 'var(--cdac-text)' }}>{center.name}</h5>
                       {[
-                        { Icon: MapPin, color: '#ef4444', text: center.address },
-                        { Icon: Phone, color: '#10b981', text: center.phone },
-                        { Icon: Info, color: '#3b82f6', label: 'Contact', text: center.contact },
-                        { Icon: Mail, color: '#f59e0b', label: 'Email', text: center.email },
-                      ].map(({ Icon: I, color, label, text }, i) => (
+                        { Icon: MapPin, text: center.address },
+                        { Icon: Phone, text: center.phone },
+                        { Icon: Info, label: 'Contact', text: center.contact },
+                        { Icon: Mail, label: 'Email', text: center.email },
+                      ].map(({ Icon: I, label, text }, i) => (
                         <div key={i} className="d-flex align-items-start mb-3">
                           <div
                             className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 me-3"
-                            style={{ width: 36, height: 36, background: `${color}15`, color }}
+                            style={{ width: 36, height: 36, background: `${accent}15`, color: accent }}
                           >
                             <I size={16} />
                           </div>

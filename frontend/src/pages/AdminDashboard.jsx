@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Tab } from 'react-bootstrap';
+import { Tab, Modal, Form, Button } from 'react-bootstrap';
+import toast from 'react-hot-toast';
 import {
   BarChart3, Users, BookOpen, HelpCircle,
   Settings, Info, LayoutDashboard, Database, ShieldCheck,
@@ -61,7 +62,32 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeKey, setActiveKey] = useState('exams');
-  const [stats, setStats] = useState({ exams: 0, students: 0, messages: 0 });
+  const [stats, setStats] = useState({ exams: 0, students: 0, teachers: 0, admins: 0, messages: 0 });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user.name || '',
+    email: user.email || '',
+    password: ''
+  });
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.put('http://localhost:5000/api/users/profile', profileData, config);
+      
+      const updatedUser = { ...user, name: res.data.name, email: res.data.email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast.success("Profile updated successfully!");
+      setShowProfileModal(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update profile");
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -75,6 +101,8 @@ const AdminDashboard = () => {
       setStats({
         exams: examsRes.data.length,
         students: usersRes.data.filter(u => u.role === 'student').length,
+        teachers: usersRes.data.filter(u => u.role === 'teacher').length,
+        admins: usersRes.data.filter(u => u.role === 'admin').length,
         messages: contactRes.data.length,
       });
     } catch (err) { console.error(err); }
@@ -103,7 +131,7 @@ const AdminDashboard = () => {
 
   const cards = [
     { label: 'Active Exams',    value: stats.exams,    icon: Database,    bg: '#eef2ff', color: C.accent1, trend: 'Total scheduled', key: 'exams' },
-    { label: 'Total Students',  value: stats.students, icon: Users,       bg: '#ecfdf5', color: C.accent3, trend: 'Registered users', key: 'users' },
+    { label: `Students: ${stats.students} · Teachers: ${stats.teachers} · Admins: ${stats.admins}`,  value: stats.students + stats.teachers + stats.admins, icon: Users,       bg: '#ecfdf5', color: C.accent3, trend: 'All Registered Users', key: 'users' },
     { label: 'Avg. Score',      value: '88%',          icon: TrendingUp,  bg: '#fffbeb', color: C.accent4, trend: 'Across all exams', key: 'performance' },
     { label: 'Messages',        value: stats.messages, icon: Mail,        bg: '#f5f3ff', color: C.primary, trend: 'Inbox', key: 'messages' },
   ];
@@ -121,7 +149,6 @@ const AdminDashboard = () => {
         borderRight: `1px solid ${C.sidebarBorder}`,
         display: 'flex', flexDirection: 'column',
         position: 'sticky', top: 0, height: '100vh',
-        overflowY: 'auto',
       }}>
         {/* Brand */}
         <div style={{ padding: '22px 20px 18px', borderBottom: `1px solid ${C.sidebarBorder}` }}>
@@ -143,10 +170,15 @@ const AdminDashboard = () => {
 
         {/* Admin profile chip */}
         <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.sidebarBorder}` }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: C.primaryLight, borderRadius: 10, padding: '10px 12px',
-          }}>
+          <div 
+            onClick={() => setShowProfileModal(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: C.primaryLight, borderRadius: 10, padding: '10px 12px',
+              cursor: 'pointer'
+            }}
+            title="Edit Profile"
+          >
             <div style={{
               width: 32, height: 32, borderRadius: '50%',
               background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
@@ -159,15 +191,13 @@ const AdminDashboard = () => {
               <div style={{ color: C.text, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user.name || user.userId || 'Administrator'}
               </div>
-              {/* Commented out Super Admin related role description */}
-              {/* <div style={{ color: C.primary, fontSize: 11, fontWeight: 600 }}>Super Admin</div> */}
-              <div style={{ color: C.primary, fontSize: 11, fontWeight: 600 }}>Admin</div>
+              <div style={{ color: C.primary, fontSize: 11, fontWeight: 600 }}>Super Admin</div>
             </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 12px' }}>
+        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
           {/* Go to Website navigation link */}
           <button
             onClick={() => navigate('/')}
@@ -227,24 +257,6 @@ const AdminDashboard = () => {
             </div>
           ))}
         </nav>
-
-        {/* Sign out */}
-        <div style={{ padding: 12, borderTop: `1px solid ${C.sidebarBorder}` }}>
-          <button
-            onClick={() => { localStorage.clear(); navigate('/'); }}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '9px 12px', borderRadius: 9, border: 'none', cursor: 'pointer',
-              backgroundColor: '#fef2f2', color: '#ef4444',
-              fontSize: 13.5, fontWeight: 600, transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fee2e2'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fef2f2'}
-          >
-            <LogOut size={15} />
-            Sign Out
-          </button>
-        </div>
       </aside>
 
       {/* ══ MAIN ═════════════════════════════════════════════ */}
@@ -273,24 +285,89 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Bell */}
-            <div style={{
-              width: 34, height: 34, borderRadius: 9,
-              border: `1px solid ${C.border}`, backgroundColor: C.cardBg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}>
-              <Bell size={15} color={C.muted} />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
             {/* Avatar */}
-            <div style={{
-              width: 34, height: 34, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 700, fontSize: 13,
-            }}>
+            <div 
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              style={{
+                width: 34, height: 34, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontWeight: 700, fontSize: 13,
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}
+              title="Profile & Options"
+            >
               {(user.name || 'A').charAt(0).toUpperCase()}
             </div>
+
+            {showUserDropdown && (
+              <div 
+                onMouseLeave={() => setShowUserDropdown(false)}
+                style={{
+                  position: 'absolute',
+                  top: '40px',
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #ede9fe',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(124, 58, 237, 0.15)',
+                  padding: '8px',
+                  zIndex: 1000,
+                  minWidth: '150px'
+                }}
+              >
+                <button
+                  onClick={() => { setShowProfileModal(true); setShowUserDropdown(false); }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: C.navText,
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = C.navHover}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <Settings size={14} />
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => { localStorage.clear(); navigate('/'); }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: '#ef4444',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -391,12 +468,65 @@ const AdminDashboard = () => {
         </div>
       </main>
 
+      {/* ── PROFILE MODAL ── */}
+      <Modal show={showProfileModal} onHide={() => setShowProfileModal(false)} centered>
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="fw-bold" style={{ color: C.primary }}>Edit Profile</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="px-4 pb-4">
+          <Form onSubmit={handleProfileUpdate}>
+            <Form.Group className="mb-3">
+              <Form.Label className="small fw-bold text-uppercase text-muted">Full Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={profileData.name}
+                onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                required
+                className="rounded-3 border-light bg-light shadow-none"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label className="small fw-bold text-uppercase text-muted">Email Address</Form.Label>
+              <Form.Control
+                type="email"
+                value={profileData.email}
+                onChange={e => setProfileData({ ...profileData, email: e.target.value })}
+                required
+                className="rounded-3 border-light bg-light shadow-none"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-4">
+              <Form.Label className="small fw-bold text-uppercase text-muted">New Password (leave blank to keep current)</Form.Label>
+              <Form.Control
+                type="password"
+                placeholder="••••••••"
+                value={profileData.password}
+                onChange={e => setProfileData({ ...profileData, password: e.target.value })}
+                className="rounded-3 border-light bg-light shadow-none"
+              />
+            </Form.Group>
+
+            <div className="text-end">
+              <Button variant="light" className="me-2 rounded-pill px-4" onClick={() => setShowProfileModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="rounded-pill px-5 fw-bold text-white border-0"
+                style={{ backgroundColor: C.primary }}>
+                Save Changes
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
-        aside::-webkit-scrollbar { width: 4px; }
-        aside::-webkit-scrollbar-track { background: transparent; }
-        aside::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 4px; }
+        nav::-webkit-scrollbar { width: 4px; }
+        nav::-webkit-scrollbar-track { background: transparent; }
+        nav::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 4px; }
         main::-webkit-scrollbar { width: 6px; }
         main::-webkit-scrollbar-track { background: #f5f3ff; }
         main::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 4px; }

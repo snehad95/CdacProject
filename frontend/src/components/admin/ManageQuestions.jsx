@@ -15,14 +15,39 @@ const ManageQuestions = () => {
   });
   const [imageFile, setImageFile] = useState(null);
 
+  const fetchExams = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/exams');
+      setExams(res.data);
+      // Clean up selected exam state if the selected exam was deleted
+      const examIds = res.data.map(ex => ex._id);
+      if (formData.examId && !examIds.includes(formData.examId)) {
+        setFormData(prev => ({ ...prev, examId: '' }));
+      }
+      if (selectedExamForView && !examIds.includes(selectedExamForView)) {
+        setSelectedExamForView('');
+      }
+    } catch (err) {
+      console.error("Error fetching exams:", err);
+    }
+  };
+
   useEffect(() => {
-    axios.get('http://localhost:5000/api/exams').then(res => setExams(res.data));
+    fetchExams();
   }, []);
 
   const fetchQuestions = async (examId) => {
     if (!examId) return setQuestions([]);
-    const res = await axios.get(`http://localhost:5000/api/questions/exam/${examId}`);
-    setQuestions(res.data);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`http://localhost:5000/api/questions/exam/${examId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setQuestions(res.data);
+    } catch (err) {
+      console.error("Error fetching questions:", err);
+      toast.error("Failed to load questions");
+    }
   };
 
   // Watch selected Exam for viewing test questions
@@ -50,8 +75,12 @@ const ManageQuestions = () => {
     }
 
     try {
+      const token = localStorage.getItem('token');
       await axios.post('http://localhost:5000/api/questions', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
       });
       toast.success('Question added successfully!');
       if (selectedExamForView === formData.examId) fetchQuestions(formData.examId);
@@ -86,6 +115,7 @@ const ManageQuestions = () => {
               <Col md={12} className="mb-3">
                 <Form.Select
                   value={formData.examId}
+                  onFocus={fetchExams}
                   onChange={e => {
                     const val = e.target.value;
                     setFormData({...formData, examId: val});
@@ -148,7 +178,11 @@ const ManageQuestions = () => {
           </h5>
         </Col>
         <Col md={6}>
-          <Form.Select value={selectedExamForView} onChange={e => setSelectedExamForView(e.target.value)}>
+          <Form.Select 
+            value={selectedExamForView} 
+            onFocus={fetchExams}
+            onChange={e => setSelectedExamForView(e.target.value)}
+          >
             <option value="">Select Exam to view questions...</option>
             {exams.map(ex => <option key={ex._id} value={ex._id}>{ex.title}</option>)}
           </Form.Select>
@@ -172,9 +206,12 @@ const ManageQuestions = () => {
               <td>{q.options.filter(o => o.isCorrect).map(o => o.text).join(', ')} (Correct)</td>
               <td>
                 <Button variant="danger" size="sm" onClick={async () => {
-                  if(window.confirm('Delete?')) {
+                  if (window.confirm('Delete this question?')) {
                     try {
-                      await axios.delete(`http://localhost:5000/api/questions/${q._id}`);
+                      const token = localStorage.getItem('token');
+                      await axios.delete(`http://localhost:5000/api/questions/${q._id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
                       fetchQuestions(selectedExamForView);
                       toast.success('Question deleted');
                     } catch (err) {

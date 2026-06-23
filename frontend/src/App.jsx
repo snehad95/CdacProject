@@ -36,11 +36,11 @@ function LayoutShell({ children }) {
   const isFullscreen = FULLSCREEN_ROUTES.some(r => pathname.startsWith(r));
   const isHome = pathname === '/';
   const isTest = pathname === '/test';
-  const isAdmin = pathname.startsWith('/admin');
+  const isPanel = pathname.startsWith('/admin') || pathname.startsWith('/teacher');
   const isUserLoggedIn = !!localStorage.getItem('token');
 
   // Disable navbar auto-hiding on dashboard and panels
-  const disableNavbarHide = pathname === '/dashboard' || isAdmin || pathname.startsWith('/teacher');
+  const disableNavbarHide = pathname === '/dashboard' || isPanel;
 
   const [navbarVisible, setNavbarVisible] = React.useState(true);
   const footerRef = React.useRef(null);
@@ -69,8 +69,8 @@ function LayoutShell({ children }) {
       {/* Header: only on home page */}
       {isHome && <Header />}
 
-      {/* Navbar: always present except commented out on Admin Panel */}
-      {!isAdmin ? (
+      {/* Navbar: always present except on Admin/Teacher Panels */}
+      {!isPanel ? (
         <div
           className="sticky-top bg-white shadow-sm"
           style={{
