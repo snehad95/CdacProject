@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, teacherOrAdmin } from '../middleware/authMiddleware.js';
 import {
   createTestimonial,
   getMyTestimonials,
@@ -56,8 +56,8 @@ router.get('/my', protect, getMyTestimonials);
 router.post('/', protect, uploadFields, createTestimonial);
 
 // Admin routes
-router.get('/admin', protect, admin, getAdminTestimonials);
-router.put('/admin/:id', protect, admin, uploadFields, updateTestimonial);
-router.delete('/admin/:id', protect, admin, deleteTestimonial);
+router.get('/admin', protect, teacherOrAdmin, getAdminTestimonials);
+router.put('/admin/:id', protect, teacherOrAdmin, uploadFields, updateTestimonial);
+router.delete('/admin/:id', protect, teacherOrAdmin, deleteTestimonial);
 
 export default router;

@@ -1,5 +1,6 @@
 import Exam from '../models/Exam.js';
 import Question from '../models/Question.js';
+import Result from '../models/Result.js';
 
 export const createExam = async (req, res) => {
   try {
@@ -71,6 +72,10 @@ export const deleteExam = async (req, res) => {
     const { id } = req.params;
     const deletedExam = await Exam.findByIdAndDelete(id);
     if (!deletedExam) return res.status(404).json({ message: "Exam not found" });
+
+    // Cascade delete associated questions and results
+    await Question.deleteMany({ examId: id });
+    await Result.deleteMany({ examId: id });
 
     res.status(200).json({ message: "Exam deleted successfully" });
   } catch (error) {

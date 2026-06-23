@@ -1,6 +1,6 @@
 import express from 'express';
 import Message from '../models/Message.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, teacherOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -21,8 +21,8 @@ router.post('/', async (req, res) => {
 
 // @desc    Get all contact messages
 // @route   GET /api/contact
-// @access  Private/Admin
-router.get('/', protect, admin, async (req, res) => {
+// @access  Private/Admin or Teacher
+router.get('/', protect, teacherOrAdmin, async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
     res.json(messages);
@@ -33,8 +33,8 @@ router.get('/', protect, admin, async (req, res) => {
 
 // @desc    Delete a message
 // @route   DELETE /api/contact/:id
-// @access  Private/Admin
-router.delete('/:id', protect, admin, async (req, res) => {
+// @access  Private/Admin or Teacher
+router.delete('/:id', protect, teacherOrAdmin, async (req, res) => {
   try {
     await Message.findByIdAndDelete(req.params.id);
     res.json({ message: "Message deleted" });

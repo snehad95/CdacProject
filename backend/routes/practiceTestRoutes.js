@@ -92,6 +92,8 @@ router.delete('/:id', protect, teacherOrAdmin, async (req, res) => {
     const test = await PracticeTest.findById(req.params.id);
     if (!test) return res.status(404).json({ message: 'Not found' });
     
+    // Cascade delete associated questions
+    await Question.deleteMany({ practiceTestId: req.params.id });
     await PracticeTest.deleteOne({ _id: req.params.id });
     res.json({ message: 'Removed' });
   } catch (error) {
