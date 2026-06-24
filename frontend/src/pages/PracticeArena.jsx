@@ -76,6 +76,7 @@ const PracticeArena = () => {
   const calculateScore = () => {
     let score = 0;
     questions.forEach((q, i) => {
+      if (q.type === 'subjective') return;
       const correctIdx = q.options.findIndex(o => o.isCorrect);
       if (answers[i] === correctIdx) score++;
     });
@@ -235,36 +236,61 @@ const PracticeArena = () => {
             <p style={styles.qText}>{questions[currentIdx].text}</p>
           </div>
 
-          <div style={styles.optionsGrid}>
-            {questions[currentIdx].options.map((opt, i) => {
-              const selected = answers[currentIdx] === i;
-              return (
-                <motion.button
-                  key={i}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={() => handleOptionClick(i)}
-                  style={{
-                    ...styles.optionBox,
-                    borderColor: selected ? '#7c5cff' : '#e5e7eb',
-                    background: selected ? 'var(--cdac-surface-alt)' : '#fff',
-                    boxShadow: selected ? '0 6px 18px rgba(79,70,229,0.12)' : '0 1px 2px rgba(15,23,42,0.04)'
-                  }}
-                >
-                  <div style={{
-                    ...styles.optLetter,
-                    background: selected ? '#7c5cff' : 'var(--cdac-bg)',
-                    color: selected ? '#fff' : 'var(--cdac-text-muted)',
-                    borderColor: selected ? '#7c5cff' : '#e5e7eb'
-                  }}>
-                    {String.fromCharCode(65 + i)}
-                  </div>
-                  <span style={{ color: selected ? '#1e1b4b' : '#1f2937' }}>{opt.text}</span>
-                  {selected && <CheckCircle2 size={18} color="#7c5cff" style={{ marginLeft: 'auto', flexShrink: 0 }} />}
-                </motion.button>
-              );
-            })}
-          </div>
+          {questions[currentIdx].type === 'subjective' ? (
+            <div style={{ marginBottom: 32 }}>
+              <textarea
+                rows={6}
+                placeholder="Type your subjective response or code here..."
+                value={answers[currentIdx] || ''}
+                onChange={e => {
+                  setAnswers({ ...answers, [currentIdx]: e.target.value });
+                }}
+                style={{
+                  width: '100%',
+                  border: '1.5px solid #e5e7eb',
+                  borderRadius: 12,
+                  padding: '16px 18px',
+                  fontFamily: 'Consolas, Monaco, monospace',
+                  fontSize: 14,
+                  background: '#fff',
+                  color: 'var(--cdac-text)',
+                  outline: 'none',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+          ) : (
+            <div style={styles.optionsGrid}>
+              {questions[currentIdx].options.map((opt, i) => {
+                const selected = answers[currentIdx] === i;
+                return (
+                  <motion.button
+                    key={i}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => handleOptionClick(i)}
+                    style={{
+                      ...styles.optionBox,
+                      borderColor: selected ? '#7c5cff' : '#e5e7eb',
+                      background: selected ? 'var(--cdac-surface-alt)' : '#fff',
+                      boxShadow: selected ? '0 6px 18px rgba(79,70,229,0.12)' : '0 1px 2px rgba(15,23,42,0.04)'
+                    }}
+                  >
+                    <div style={{
+                      ...styles.optLetter,
+                      background: selected ? '#7c5cff' : 'var(--cdac-bg)',
+                      color: selected ? '#fff' : 'var(--cdac-text-muted)',
+                      borderColor: selected ? '#7c5cff' : '#e5e7eb'
+                    }}>
+                      {String.fromCharCode(65 + i)}
+                    </div>
+                    <span style={{ color: selected ? '#1e1b4b' : '#1f2937' }}>{opt.text}</span>
+                    {selected && <CheckCircle2 size={18} color="#7c5cff" style={{ marginLeft: 'auto', flexShrink: 0 }} />}
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
 
           <div style={styles.navRow}>
             <button

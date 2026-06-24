@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Nav, Container, Button, Modal, Form } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { User } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import LoginModal from './LoginModal';
 import RegisterModal from './RegisterModal';
 import axios from 'axios';
@@ -23,6 +23,7 @@ const AppNavbar = () => {
   const [showRegister, setShowRegister] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: '', email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (showProfile && user) {
@@ -202,51 +203,129 @@ const AppNavbar = () => {
       <RegisterModal show={showRegister} handleClose={() => setShowRegister(false)} />
 
       <Modal show={showProfile} onHide={() => setShowProfile(false)} centered>
-        <div style={{ background: T.surface, borderRadius: 16, overflow: 'hidden', border: `1px solid ${T.border}` }}>
+        <div style={{ background: T.surface, borderRadius: 20, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}>
           <div style={{ height: 6, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})` }} />
           <Modal.Header closeButton className="border-0 pb-0">
-            <Modal.Title className="fw-bold w-100 text-center" style={{ color: T.primaryDeep }}>
-              Edit Profile
+            <Modal.Title className="fw-bold w-100 text-center" style={{ color: T.primaryDeep, fontSize: '1.4rem' }}>
+              Account Settings
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body className="p-4 p-md-5">
+          <Modal.Body className="px-4 py-4 px-md-5">
+            {/* Avatar Header */}
+            <div className="d-flex flex-column align-items-center mb-4">
+              <div style={{
+                width: 76,
+                height: 76,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(124,92,255,0.25)',
+                color: '#fff',
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                border: '4px solid #fff',
+                marginBottom: 12
+              }}>
+                {(profileData.name || user?.name || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: T.text }}>{profileData.name || user?.name}</div>
+              <div style={{ fontSize: '0.82rem', color: T.muted, marginBottom: 8 }}>{profileData.email || user?.email}</div>
+              {user?.role && (
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  padding: '4px 12px',
+                  borderRadius: 12,
+                  letterSpacing: '0.5px',
+                  background: user.role === 'admin' ? 'rgba(225, 29, 72, 0.1)' : user.role === 'teacher' ? 'rgba(217, 119, 6, 0.1)' : 'rgba(22, 163, 74, 0.1)',
+                  color: user.role === 'admin' ? '#e11d48' : user.role === 'teacher' ? '#d97706' : '#16a34a',
+                  border: `1px solid ${user.role === 'admin' ? 'rgba(225, 29, 72, 0.2)' : user.role === 'teacher' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(22, 163, 74, 0.2)'}`
+                }}>
+                  {user.role} Portal
+                </span>
+              )}
+            </div>
+
             <Form onSubmit={handleProfileUpdate}>
               <Form.Group className="mb-3">
-                <Form.Label className="fw-semibold" style={{ color: T.text }}>Full Name</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  value={profileData.name} 
-                  onChange={e => setProfileData({ ...profileData, name: e.target.value })} 
-                  required
-                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} 
-                />
+                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>Full Name</Form.Label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: T.muted, opacity: 0.8 }}>
+                    <User size={18} />
+                  </span>
+                  <Form.Control 
+                    type="text" 
+                    value={profileData.name} 
+                    onChange={e => setProfileData({ ...profileData, name: e.target.value })} 
+                    required
+                    style={{ border: `1px solid ${T.border}`, borderRadius: 12, padding: '11px 14px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                  />
+                </div>
               </Form.Group>
+
               <Form.Group className="mb-3">
-                <Form.Label className="fw-semibold" style={{ color: T.text }}>Email Address</Form.Label>
-                <Form.Control 
-                  type="email" 
-                  value={profileData.email} 
-                  onChange={e => setProfileData({ ...profileData, email: e.target.value })} 
-                  required
-                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} 
-                />
+                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>Email Address</Form.Label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: T.muted, opacity: 0.8 }}>
+                    <Mail size={18} />
+                  </span>
+                  <Form.Control 
+                    type="email" 
+                    value={profileData.email} 
+                    onChange={e => setProfileData({ ...profileData, email: e.target.value })} 
+                    required
+                    style={{ border: `1px solid ${T.border}`, borderRadius: 12, padding: '11px 14px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                  />
+                </div>
               </Form.Group>
+
               <Form.Group className="mb-4">
-                <Form.Label className="fw-semibold" style={{ color: T.text }}>New Password (leave blank to keep current)</Form.Label>
-                <Form.Control 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={profileData.password} 
-                  onChange={e => setProfileData({ ...profileData, password: e.target.value })} 
-                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} 
-                />
+                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>New Password <span className="text-lowercase" style={{ fontWeight: 400 }}>(leave blank to keep current)</span></Form.Label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: T.muted, opacity: 0.8 }}>
+                    <Lock size={18} />
+                  </span>
+                  <Form.Control 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                    value={profileData.password} 
+                    onChange={e => setProfileData({ ...profileData, password: e.target.value })} 
+                    style={{ border: `1px solid ${T.border}`, borderRadius: 12, padding: '11px 42px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '14px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: T.muted,
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: 0,
+                      outline: 'none',
+                      boxShadow: 'none'
+                    }}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </Form.Group>
-              <div className="d-flex gap-2">
+
+              <div className="d-flex gap-3">
                 <Button 
                   variant="light" 
                   className="w-50 py-2 fw-bold" 
                   onClick={() => setShowProfile(false)}
-                  style={{ borderRadius: 10, border: `1px solid ${T.border}` }}
+                  style={{ borderRadius: 12, border: `1px solid ${T.border}`, padding: '10px 0', fontSize: '0.95rem' }}
                 >
                   Cancel
                 </Button>
@@ -255,7 +334,10 @@ const AppNavbar = () => {
                   type="submit"
                   style={{
                     background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
-                    borderRadius: 10, boxShadow: '0 8px 20px rgba(124,92,255,0.35)',
+                    borderRadius: 12, 
+                    boxShadow: '0 8px 20px rgba(124,92,255,0.3)',
+                    padding: '10px 0',
+                    fontSize: '0.95rem'
                   }}
                 >
                   Save Changes

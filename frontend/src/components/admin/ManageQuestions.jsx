@@ -10,8 +10,9 @@ const ManageQuestions = () => {
   const [selectedExamForView, setSelectedExamForView] = useState('');
 
   const [formData, setFormData] = useState({
-    examId: '', text: '', option1: '', isCorrect1: false, option2: '', isCorrect2: false, 
-    option3: '', isCorrect3: false, option4: '', isCorrect4: false
+    examId: '', type: 'mcq', text: '', option1: '', isCorrect1: false, option2: '', isCorrect2: false, 
+    option3: '', isCorrect3: false, option4: '', isCorrect4: false,
+    marks: 1, workspaceLines: 10
   });
   const [imageFile, setImageFile] = useState(null);
 
@@ -59,7 +60,8 @@ const ManageQuestions = () => {
     e.preventDefault();
     if (!formData.examId) return toast.error("Select an exam to add question to!");
 
-    const optionsArray = [
+    const isSubjective = formData.type === 'subjective';
+    const optionsArray = isSubjective ? [] : [
       { text: formData.option1, isCorrect: formData.isCorrect1 },
       { text: formData.option2, isCorrect: formData.isCorrect2 },
       { text: formData.option3, isCorrect: formData.isCorrect3 },
@@ -69,7 +71,10 @@ const ManageQuestions = () => {
     const data = new FormData();
     data.append('examId', formData.examId);
     data.append('text', formData.text);
+    data.append('type', formData.type);
     data.append('options', JSON.stringify(optionsArray));
+    data.append('marks', formData.marks);
+    data.append('workspaceLines', formData.workspaceLines);
     if (imageFile) {
       data.append('image', imageFile);
     }
@@ -87,7 +92,8 @@ const ManageQuestions = () => {
       // Reset form but keep examId
       setFormData(prev => ({ 
         ...prev, text: '', option1: '', isCorrect1: false, option2: '', isCorrect2: false, 
-        option3: '', isCorrect3: false, option4: '', isCorrect4: false 
+        option3: '', isCorrect3: false, option4: '', isCorrect4: false,
+        marks: 1, workspaceLines: 10
       }));
       setImageFile(null);
     } catch (err) {
@@ -112,7 +118,8 @@ const ManageQuestions = () => {
           <Card.Title className="fw-bold mb-3 border-bottom pb-2">Add New Question</Card.Title>
           <Form onSubmit={handleSubmit}>
             <Row>
-              <Col md={12} className="mb-3">
+              <Col md={4} className="mb-3">
+                <Form.Label className="small fw-semibold text-muted">Target Exam</Form.Label>
                 <Form.Select
                   value={formData.examId}
                   onFocus={fetchExams}
@@ -128,6 +135,40 @@ const ManageQuestions = () => {
                   {exams.map(ex => <option key={ex._id} value={ex._id}>{ex.title}</option>)}
                 </Form.Select>
               </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label className="small fw-semibold text-muted">Question Type</Form.Label>
+                <Form.Select
+                  value={formData.type}
+                  onChange={e => setFormData({...formData, type: e.target.value})}
+                  required
+                >
+                  <option value="mcq">Multiple Choice Question (MCQ)</option>
+                  <option value="subjective">Subjective / Code Question</option>
+                </Form.Select>
+              </Col>
+              <Col md={2} className="mb-3">
+                <Form.Label className="small fw-semibold text-muted">Question Marks</Form.Label>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  value={formData.marks}
+                  onChange={e => setFormData({...formData, marks: parseInt(e.target.value) || 1})}
+                  required
+                />
+              </Col>
+              {formData.type === 'subjective' && (
+                <Col md={2} className="mb-3">
+                  <Form.Label className="small fw-semibold text-muted">Workspace Lines</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="3"
+                    max="50"
+                    value={formData.workspaceLines}
+                    onChange={e => setFormData({...formData, workspaceLines: parseInt(e.target.value) || 10})}
+                    required
+                  />
+                </Col>
+              )}
               <Col md={8} className="mb-3">
                 <Form.Control as="textarea" rows={3} placeholder="Question Text" value={formData.text} onChange={e => setFormData({...formData, text: e.target.value})} required />
               </Col>
@@ -136,30 +177,34 @@ const ManageQuestions = () => {
                 <Form.Control type="file" onChange={e => setImageFile(e.target.files[0])} />
               </Col>
 
-              <Col md={6} className="mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(1)} checked={formData.isCorrect1} />
-                  <Form.Control placeholder="Option A" value={formData.option1} onChange={e => setFormData({...formData, option1: e.target.value})} required />
-                </div>
-              </Col>
-              <Col md={6} className="mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(2)} checked={formData.isCorrect2} />
-                  <Form.Control placeholder="Option B" value={formData.option2} onChange={e => setFormData({...formData, option2: e.target.value})} required />
-                </div>
-              </Col>
-              <Col md={6} className="mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(3)} checked={formData.isCorrect3} />
-                  <Form.Control placeholder="Option C" value={formData.option3} onChange={e => setFormData({...formData, option3: e.target.value})} required />
-                </div>
-              </Col>
-              <Col md={6} className="mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(4)} checked={formData.isCorrect4} />
-                  <Form.Control placeholder="Option D" value={formData.option4} onChange={e => setFormData({...formData, option4: e.target.value})} required />
-                </div>
-              </Col>
+              {formData.type === 'mcq' && (
+                <>
+                  <Col md={6} className="mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(1)} checked={formData.isCorrect1} />
+                      <Form.Control placeholder="Option A" value={formData.option1} onChange={e => setFormData({...formData, option1: e.target.value})} required={formData.type === 'mcq'} />
+                    </div>
+                  </Col>
+                  <Col md={6} className="mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(2)} checked={formData.isCorrect2} />
+                      <Form.Control placeholder="Option B" value={formData.option2} onChange={e => setFormData({...formData, option2: e.target.value})} required={formData.type === 'mcq'} />
+                    </div>
+                  </Col>
+                  <Col md={6} className="mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(3)} checked={formData.isCorrect3} />
+                      <Form.Control placeholder="Option C" value={formData.option3} onChange={e => setFormData({...formData, option3: e.target.value})} required={formData.type === 'mcq'} />
+                    </div>
+                  </Col>
+                  <Col md={6} className="mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <Form.Check type="radio" name="correctOpt" onChange={() => setCorrectOption(4)} checked={formData.isCorrect4} />
+                      <Form.Control placeholder="Option D" value={formData.option4} onChange={e => setFormData({...formData, option4: e.target.value})} required={formData.type === 'mcq'} />
+                    </div>
+                  </Col>
+                </>
+              )}
             </Row>
             <Button type="submit" variant="info" className="px-4 text-white fw-bold">Add Question</Button>
           </Form>
@@ -194,7 +239,8 @@ const ManageQuestions = () => {
           <tr>
             <th>Question</th>
             <th>Type</th>
-            <th>Options</th>
+            <th>Marks</th>
+            <th>Options / Info</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -202,8 +248,24 @@ const ManageQuestions = () => {
           {questions.map((q, idx) => (
             <tr key={q._id}>
               <td style={{ maxWidth: '300px' }} className="text-wrap">{q.text}</td>
-              <td>{q.imageUrl ? 'Text+Image' : 'Text'}</td>
-              <td>{q.options.filter(o => o.isCorrect).map(o => o.text).join(', ')} (Correct)</td>
+              <td>
+                <span className={`badge ${q.type === 'subjective' ? 'bg-warning text-dark' : 'bg-primary'}`} style={{ textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                  {q.type || 'mcq'}
+                </span>
+                {q.imageUrl && <span className="d-block small text-muted mt-1">(Image attached)</span>}
+              </td>
+              <td>
+                <span className="fw-bold">{q.marks || 1} mark{ (q.marks || 1) !== 1 ? 's' : '' }</span>
+              </td>
+              <td>
+                {q.type === 'subjective' ? (
+                  <span className="text-muted fst-italic">Workspace: {q.workspaceLines || 10} lines</span>
+                ) : (
+                  <span>
+                    <strong>Correct:</strong> {q.options.filter(o => o.isCorrect).map(o => o.text).join(', ') || 'None'}
+                  </span>
+                )}
+              </td>
               <td>
                 <Button variant="danger" size="sm" onClick={async () => {
                   if (window.confirm('Delete this question?')) {

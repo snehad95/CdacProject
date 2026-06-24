@@ -3,28 +3,32 @@ import Exam from '../models/Exam.js';
 
 export const addQuestion = async (req, res) => {
   try {
-    const { examId, practiceTestId, text, options } = req.body;
+    const { examId, practiceTestId, text, type, options, marks, workspaceLines } = req.body;
     let imageUrl = null;
     
     if (req.file) {
       imageUrl = `/uploads/${req.file.filename}`;
     }
 
-    const parsedOptions = typeof options === 'string' ? JSON.parse(options) : options;
+    const parsedOptions = options ? (typeof options === 'string' ? JSON.parse(options) : options) : [];
 
     const newQuestion = new Question({
       examId: examId || undefined,
       practiceTestId: practiceTestId || undefined,
       text,
+      type: type || 'mcq',
       options: parsedOptions,
-      imageUrl
+      imageUrl,
+      marks: Number(marks) || 1,
+      workspaceLines: Number(workspaceLines) || 10
     });
 
     await newQuestion.save();
 
     if (examId) {
-      const questionCount = await Question.countDocuments({ examId });
-      await Exam.findByIdAndUpdate(examId, { totalMarks: questionCount });
+      const allQuestions = await Question.find({ examId });
+      const totalMarks = allQuestions.reduce((acc, q) => acc + (q.marks || 1), 0);
+      await Exam.findByIdAndUpdate(examId, { totalMarks });
     }
 
     res.status(201).json(newQuestion);
@@ -65,14 +69,18 @@ export const addQuestionsBulk = async (req, res) => {
       examId: examId || undefined,
       practiceTestId: practiceTestId || undefined,
       text: q.text,
-      options: q.options
+      type: q.type || 'mcq',
+      options: q.options || [],
+      marks: Number(q.marks) || 1,
+      workspaceLines: Number(q.workspaceLines) || 10
     }));
 
     const inserted = await Question.insertMany(parsedQuestions);
 
     if (examId) {
-      const questionCount = await Question.countDocuments({ examId });
-      await Exam.findByIdAndUpdate(examId, { totalMarks: questionCount });
+      const allQuestions = await Question.find({ examId });
+      const totalMarks = allQuestions.reduce((acc, q) => acc + (q.marks || 1), 0);
+      await Exam.findByIdAndUpdate(examId, { totalMarks });
     }
 
     res.status(201).json(inserted);
@@ -88,8 +96,9 @@ export const deleteQuestion = async (req, res) => {
     if (!question) return res.status(404).json({ message: "Question not found" });
 
     if (question.examId) {
-      const questionCount = await Question.countDocuments({ examId: question.examId });
-      await Exam.findByIdAndUpdate(question.examId, { totalMarks: questionCount });
+      const allQuestions = await Question.find({ examId: question.examId });
+      const totalMarks = allQuestions.reduce((acc, q) => acc + (q.marks || 1), 0);
+      await Exam.findByIdAndUpdate(question.examId, { totalMarks });
     }
 
     res.status(200).json({ message: "Question deleted successfully" });

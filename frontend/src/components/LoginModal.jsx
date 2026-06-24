@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 const T = {
   primary: '#7c5cff', primaryDeep: '#6a41e6', text: 'var(--cdac-text)',
@@ -12,6 +13,7 @@ const LoginModal = ({ show, handleClose }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
@@ -63,9 +65,38 @@ const LoginModal = ({ show, handleClose }) => {
             </Form.Group>
             <Form.Group className="mb-4">
               <Form.Label className="fw-semibold" style={{ color: T.text }}>Password</Form.Label>
-              <Form.Control type="password" placeholder="Enter your password" value={password}
-                onChange={(e) => setPassword(e.target.value)} required
-                style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} />
+              <div style={{ position: 'relative' }}>
+                <Form.Control 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Enter your password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required
+                  style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 42px 10px 14px' }} 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: T.muted,
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0,
+                    outline: 'none',
+                    boxShadow: 'none'
+                  }}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </Form.Group>
             <Button className="w-100 py-2 fs-6 fw-bold text-white border-0" type="submit"
               style={{

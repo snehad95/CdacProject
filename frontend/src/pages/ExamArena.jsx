@@ -19,14 +19,7 @@ const T = {
   border: 'var(--cdac-border)',
 };
 
-const loadScript = (src) =>
-  new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-    const s = document.createElement('script');
-    s.src = src; s.async = true;
-    s.onload = resolve; s.onerror = reject;
-    document.head.appendChild(s);
-  });
+
 
 const ExamArena = () => {
   const { examId } = useParams();
@@ -45,12 +38,6 @@ const ExamArena = () => {
   const [showWarn, setShowWarn] = useState(false);
   const violationsRef = useRef(0);
 
-  const videoRef = useRef(null);
-  const faceDetectInterval = useRef(null);
-  const [faceStatus, setFaceStatus] = useState('Initializing...');
-  const faceApiLoaded = useRef(false);
-  const streamRef = useRef(null);
-
   const timerRef = useRef(null);
   const submittedRef = useRef(false);
 
@@ -58,21 +45,30 @@ const ExamArena = () => {
     if (submittedRef.current) return;
     submittedRef.current = true;
     clearInterval(timerRef.current);
-    clearInterval(faceDetectInterval.current);
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     try { if (document.exitFullscreen) document.exitFullscreen(); } catch (_) { }
     document.oncontextmenu = null;
     document.oncopy = null; document.onpaste = null;
 
     try {
       const currentAnswers = answersRef.current;
-      const formattedAnswers = Object.keys(currentAnswers).map(qId => ({
-        questionId: qId,
-        selectedOptionText: currentAnswers[qId],
-      }));
+      const formattedAnswers = Object.keys(currentAnswers).map(qId => {
+        const q = questions.find(item => item._id === qId);
+        if (q && q.type === 'subjective') {
+          return {
+            questionId: qId,
+            subjectiveAnswer: currentAnswers[qId],
+          };
+        }
+        return {
+          questionId: qId,
+          selectedOptionText: currentAnswers[qId],
+        };
+      });
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       await axios.post('http://localhost:5000/api/results/submit', {
         userId: user.id, examId, answers: formattedAnswers,
-      });
+      }, config);
     } catch (err) { console.error('Submit error', err); }
 
     const msg = reason === 'time'
@@ -121,14 +117,10 @@ const ExamArena = () => {
     window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibility);
 
-    const handleFsChange = () => { if (!document.fullscreenElement && !submittedRef.current) triggerViolation('Fullscreen was exited. Please stay in fullscreen mode.'); };
-    document.addEventListener('fullscreenchange', handleFsChange);
-
     return () => {
       window.removeEventListener('popstate', blockBack);
       window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibility);
-      document.removeEventListener('fullscreenchange', handleFsChange);
       document.removeEventListener('keydown', blockKeys);
       document.oncontextmenu = null;
       document.oncopy = null; document.onpaste = null; document.oncut = null;
@@ -136,6 +128,13 @@ const ExamArena = () => {
   }, [triggerViolation]);
 
   function blockKeys(e) {
+    const isTextarea = e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'textarea';
+    if (isTextarea) {
+      if ((e.ctrlKey || e.metaKey) && ['c', 'v'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'x', 'p', 's', 'u'].includes(e.key.toLowerCase())) e.preventDefault();
     if (['F12', 'F5'].includes(e.key)) e.preventDefault();
   }
@@ -144,9 +143,10 @@ const ExamArena = () => {
     if (user.role !== 'student') { navigate('/'); return; }
     const fetchExamData = async () => {
       try {
+        const token = localStorage.getItem('token');
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
         try {
-          const token = localStorage.getItem('token');
-          const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
           const checkRes = await axios.get(`http://localhost:5000/api/results/student/${user.id}`, config);
           const hasAttempted = checkRes.data.some(r => r.examId && r.examId._id === examId);
           if (hasAttempted) {
@@ -156,8 +156,8 @@ const ExamArena = () => {
         } catch (err) { console.error("Result check failed", err); }
 
         const [examsRes, qRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/exams'),
-          axios.get(`http://localhost:5000/api/questions/exam/${examId}`),
+          axios.get('http://localhost:5000/api/exams', config),
+          axios.get(`http://localhost:5000/api/questions/exam/${examId}`, config),
         ]);
         const current = examsRes.data.find(e => e._id === examId);
         setExam(current);
@@ -180,44 +180,7 @@ const ExamArena = () => {
     return () => clearInterval(timerRef.current);
   }, [exam]); // eslint-disable-line
 
-  useEffect(() => {
-    let alive = true;
-    const startCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        await loadScript('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js');
-        if (!alive) return;
-        const faceapi = window.faceapi;
-        const MODEL_URL = 'https://vladmandic.github.io/face-api/model/';
-        setFaceStatus('Loading Models...');
-        await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)]);
-        faceApiLoaded.current = true;
-        setFaceStatus('Active');
-        faceDetectInterval.current = setInterval(async () => {
-          if (!alive || submittedRef.current || !videoRef.current || !faceApiLoaded.current) return;
-          try {
-            const detections = await faceapi.detectAllFaces(
-              videoRef.current,
-              new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4, inputSize: 224 })
-            );
-            if (detections.length === 0) triggerViolation('No face detected in camera! Please ensure your face is clearly visible.');
-            else if (detections.length > 1) triggerViolation(`Multiple faces detected (${detections.length}). Exam violation! Only you must be in the frame.`);
-          } catch (_) { }
-        }, 3000);
-      } catch (err) {
-        console.warn('Camera access denied or unavailable:', err.message);
-        setFaceStatus('Camera Error');
-      }
-    };
-    startCamera();
-    return () => {
-      alive = false;
-      clearInterval(faceDetectInterval.current);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-    };
-  }, [triggerViolation]);
+
 
   const formatTime = (s) => {
     const h = Math.floor(s / 3600);
@@ -357,37 +320,85 @@ const ExamArena = () => {
           <div style={S.questionScroll} className="notranslate">
             {questions.map((q, idx) => {
               const sel = answers[q._id];
+              const isSubjective = q.type === 'subjective';
               return (
                 <div key={q._id} id={`q-${q._id}`} style={{ ...S.qCard, borderLeft: sel ? `4px solid ${T.success}` : `4px solid ${T.border}` }}>
-                  <div style={S.qNumber}>Q{idx + 1}</div>
-                  <p style={S.qText}>{q.text}</p>
+                  <div style={S.qNumber}>Q{idx + 1} <span style={{ float: 'right', fontSize: '0.68rem', fontWeight: 'bold', color: isSubjective ? T.warning : T.primary }}>{isSubjective ? 'SUBJECTIVE' : 'MCQ'}</span></div>
+                  <p 
+                    style={{ ...S.qText, userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }} 
+                    onDragStart={e => e.preventDefault()} 
+                    onCopy={e => e.preventDefault()}
+                  >
+                    {q.text}
+                  </p>
                   {q.imageUrl && <img src={q.imageUrl} alt="" style={{ maxWidth: '100%', borderRadius: 10, marginBottom: 14 }} />}
-                  <div style={S.optionsList}>
-                    {q.options.map((opt, oIdx) => {
-                      const isSelected = sel === opt.text;
-                      return (
-                        <label key={oIdx} style={{ ...S.optionLabel, background: isSelected ? 'rgba(124,92,255,0.1)' : T.surfaceAlt, border: `1px solid ${isSelected ? T.primary : T.border}`, cursor: 'pointer' }}>
-                          <span style={{ ...S.optionDot, background: isSelected ? T.primary : T.surface, border: `2px solid ${isSelected ? T.primary : T.primarySoft}` }}>
-                            {isSelected && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cdac-surface)' }} />}
-                          </span>
-                          <input
-                            type="radio"
-                            name={q._id}
-                            style={{ display: 'none' }}
-                            checked={isSelected}
-                            onChange={() => {
-                              setAnswers(prev => {
-                                const newAnswers = { ...prev, [q._id]: opt.text };
-                                answersRef.current = newAnswers;
-                                return newAnswers;
-                              });
-                            }}
-                          />
-                          <span style={{ color: T.text, fontWeight: 500, fontSize: '.95rem' }}>{opt.text}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                  
+                  {isSubjective ? (
+                    <div style={{ marginTop: '12px' }}>
+                      <textarea
+                        rows={q.workspaceLines || 10}
+                        placeholder="Write your explanation or Java program code here..."
+                        value={answers[q._id] || ''}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setAnswers(prev => {
+                            const newAnswers = { ...prev, [q._id]: val };
+                            answersRef.current = newAnswers;
+                            return newAnswers;
+                          });
+                        }}
+                        style={{
+                          width: '100%',
+                          border: `1.5px solid ${T.border}`,
+                          borderRadius: 12,
+                          padding: '14px 16px',
+                          fontFamily: 'Consolas, Monaco, monospace',
+                          fontSize: '0.92rem',
+                          background: T.surfaceAlt,
+                          color: T.text,
+                          resize: 'vertical',
+                          outline: 'none',
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text',
+                          MozUserSelect: 'text',
+                          msUserSelect: 'text'
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={S.optionsList}>
+                      {q.options.map((opt, oIdx) => {
+                        const isSelected = sel === opt.text;
+                        return (
+                          <label key={oIdx} style={{ ...S.optionLabel, background: isSelected ? 'rgba(124,92,255,0.1)' : T.surfaceAlt, border: `1px solid ${isSelected ? T.primary : T.border}`, cursor: 'pointer' }}>
+                            <span style={{ ...S.optionDot, background: isSelected ? T.primary : T.surface, border: `2px solid ${isSelected ? T.primary : T.primarySoft}` }}>
+                              {isSelected && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cdac-surface)' }} />}
+                            </span>
+                            <input
+                              type="radio"
+                              name={q._id}
+                              style={{ display: 'none' }}
+                              checked={isSelected}
+                              onChange={() => {
+                                setAnswers(prev => {
+                                  const newAnswers = { ...prev, [q._id]: opt.text };
+                                  answersRef.current = newAnswers;
+                                  return newAnswers;
+                                });
+                              }}
+                            />
+                            <span 
+                              style={{ color: T.text, fontWeight: 500, fontSize: '.95rem', userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+                              onDragStart={e => e.preventDefault()}
+                              onCopy={e => e.preventDefault()}
+                            >
+                              {opt.text}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -411,16 +422,7 @@ const ExamArena = () => {
             </div>
           </div>
 
-          <div style={S.cameraCard}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: faceStatus === 'Active' ? T.success : T.warning }} />
-                <span style={{ color: T.text, fontSize: '.72rem', fontWeight: 700 }}>PROCTOR: {faceStatus}</span>
-              </div>
-            </div>
-            <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', borderRadius: 10, background: '#000', aspectRatio: '4/3', objectFit: 'cover' }} />
-            <p style={{ color: T.textMuted, fontSize: '.7rem', textAlign: 'center', margin: '8px 0 0' }}>Keep your face clearly visible</p>
-          </div>
+
 
           <div style={{ ...S.sideCard, background: violations >= MAX_VIOLATIONS ? 'rgba(239,68,68,0.1)' : violations > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.08)', border: `1px solid ${violations >= MAX_VIOLATIONS ? 'rgba(239,68,68,0.3)' : violations > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.25)'}` }}>
             <span style={{ fontSize: '1.6rem' }}>{violations >= MAX_VIOLATIONS ? '🚨' : violations > 0 ? '⚠️' : '✅'}</span>

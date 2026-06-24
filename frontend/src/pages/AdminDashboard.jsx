@@ -5,7 +5,8 @@ import {
   BarChart3, Users, BookOpen, HelpCircle,
   Settings, Info, LayoutDashboard, Database, ShieldCheck,
   FileText, Award, Mail, LogOut, ChevronRight,
-  TrendingUp, CheckSquare, Bell, Search, MessageSquare
+  TrendingUp, CheckSquare, Bell, Search, MessageSquare,
+  Lock, Eye, EyeOff, User
 } from 'lucide-react';
 import ManageExams from '../components/admin/ManageExams';
 import ManageQuestions from '../components/admin/ManageQuestions';
@@ -70,6 +71,7 @@ const AdminDashboard = () => {
     email: user.email || '',
     password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
@@ -470,55 +472,147 @@ const AdminDashboard = () => {
 
       {/* ── PROFILE MODAL ── */}
       <Modal show={showProfileModal} onHide={() => setShowProfileModal(false)} centered>
-        <Modal.Header closeButton className="border-0">
-          <Modal.Title className="fw-bold" style={{ color: C.primary }}>Edit Profile</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="px-4 pb-4">
-          <Form onSubmit={handleProfileUpdate}>
-            <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-uppercase text-muted">Full Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={profileData.name}
-                onChange={e => setProfileData({ ...profileData, name: e.target.value })}
-                required
-                className="rounded-3 border-light bg-light shadow-none"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-uppercase text-muted">Email Address</Form.Label>
-              <Form.Control
-                type="email"
-                value={profileData.email}
-                onChange={e => setProfileData({ ...profileData, email: e.target.value })}
-                required
-                className="rounded-3 border-light bg-light shadow-none"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold text-uppercase text-muted">New Password (leave blank to keep current)</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="••••••••"
-                value={profileData.password}
-                onChange={e => setProfileData({ ...profileData, password: e.target.value })}
-                className="rounded-3 border-light bg-light shadow-none"
-              />
-            </Form.Group>
-
-            <div className="text-end">
-              <Button variant="light" className="me-2 rounded-pill px-4" onClick={() => setShowProfileModal(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" className="rounded-pill px-5 fw-bold text-white border-0"
-                style={{ backgroundColor: C.primary }}>
-                Save Changes
-              </Button>
+        <div style={{ background: '#ffffff', borderRadius: 20, overflow: 'hidden', border: `1px solid ${C.border}`, boxShadow: '0 20px 40px rgba(124, 58, 237, 0.15)' }}>
+          <div style={{ height: 6, background: `linear-gradient(90deg, ${C.primary}, #ef4444)` }} />
+          <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fw-bold w-100 text-center" style={{ color: C.primary, fontSize: '1.4rem' }}>
+              Edit Admin Profile
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="px-4 py-4 px-md-5">
+            {/* Avatar Header */}
+            <div className="d-flex flex-column align-items-center mb-4">
+              <div style={{
+                width: 76,
+                height: 76,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${C.primary}, #ef4444)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(124,58,237,0.25)',
+                color: '#fff',
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                border: '4px solid #fff',
+                marginBottom: 12
+              }}>
+                {(profileData.name || user.name || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: C.text }}>{profileData.name || user.name}</div>
+              <div style={{ fontSize: '0.82rem', color: C.muted, marginBottom: 8 }}>{profileData.email || user.email}</div>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                padding: '4px 12px',
+                borderRadius: 12,
+                letterSpacing: '0.5px',
+                background: 'rgba(225, 29, 72, 0.1)',
+                color: '#e11d48',
+                border: '1px solid rgba(225, 29, 72, 0.2)'
+              }}>
+                Super Admin Portal
+              </span>
             </div>
-          </Form>
-        </Modal.Body>
+
+            <Form onSubmit={handleProfileUpdate}>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>Full Name</Form.Label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: C.muted, opacity: 0.8 }}>
+                    <User size={18} />
+                  </span>
+                  <Form.Control 
+                    type="text" 
+                    value={profileData.name} 
+                    onChange={e => setProfileData({ ...profileData, name: e.target.value })} 
+                    required
+                    style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: '11px 14px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                  />
+                </div>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>Email Address</Form.Label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: C.muted, opacity: 0.8 }}>
+                    <Mail size={18} />
+                  </span>
+                  <Form.Control 
+                    type="email" 
+                    value={profileData.email} 
+                    onChange={e => setProfileData({ ...profileData, email: e.target.value })} 
+                    required
+                    style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: '11px 14px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                  />
+                </div>
+              </Form.Group>
+
+              <Form.Group className="mb-4">
+                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>New Password <span className="text-lowercase" style={{ fontWeight: 400 }}>(leave blank to keep current)</span></Form.Label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: C.muted, opacity: 0.8 }}>
+                    <Lock size={18} />
+                  </span>
+                  <Form.Control 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                    value={profileData.password} 
+                    onChange={e => setProfileData({ ...profileData, password: e.target.value })} 
+                    style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: '11px 42px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '14px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: C.muted,
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: 0,
+                      outline: 'none',
+                      boxShadow: 'none'
+                    }}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </Form.Group>
+
+              <div className="d-flex gap-3">
+                <Button 
+                  variant="light" 
+                  className="w-50 py-2 fw-bold" 
+                  onClick={() => setShowProfileModal(false)}
+                  style={{ borderRadius: 12, border: `1px solid ${C.border}`, padding: '10px 0', fontSize: '0.95rem' }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  className="w-50 py-2 fw-bold text-white border-0" 
+                  type="submit"
+                  style={{
+                    background: `linear-gradient(135deg, ${C.primary}, #ef4444)`,
+                    borderRadius: 12, 
+                    boxShadow: '0 8px 20px rgba(124,58,237,0.3)',
+                    padding: '10px 0',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </Form>
+          </Modal.Body>
+        </div>
       </Modal>
 
       <style>{`

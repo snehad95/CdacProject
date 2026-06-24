@@ -658,9 +658,11 @@ const practiceTestTemplates = [
   }
 ];
 
-const seedData = async () => {
+export const seedData = async (shouldExit = true) => {
   try {
-    await mongoose.connect(CONNECTION_URL);
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(CONNECTION_URL);
+    }
     console.log('Connected to MongoDB for seeding...');
 
     // 1. Seed Practice Tests and Questions
@@ -752,12 +754,14 @@ const seedData = async () => {
     console.log('✅ Seeded Exam Questions');
 
     console.log('\n🌟 Data seeding completed successfully!');
-    process.exit();
+    if (shouldExit) process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding data:', error.message);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
   }
 };
 
-seedData();
+if (process.argv[1] && (process.argv[1].endsWith('seed_data.js') || process.argv[1].includes('seed_data.js'))) {
+  seedData(true);
+}
 

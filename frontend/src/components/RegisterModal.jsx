@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 const T = {
   primary: '#7c5cff', primaryDeep: '#6a41e6', text: 'var(--cdac-text)',
@@ -10,13 +11,18 @@ const T = {
 
 const RegisterModal = ({ show, handleClose }) => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleRegister = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+    setLoading(true);
+    setError('');
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', {
         name: formData.name, email: formData.email, password: formData.password,
@@ -30,6 +36,7 @@ const RegisterModal = ({ show, handleClose }) => {
       }, 1000);
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
+      setLoading(false);
     }
   };
 
@@ -69,24 +76,91 @@ const RegisterModal = ({ show, handleClose }) => {
               <Col md={6} className="mb-3">
                 <Form.Group>
                   <Form.Label className="fw-semibold" style={{ color: T.text }}>Password</Form.Label>
-                  <Form.Control type="password" name="password" placeholder="Create a password"
-                    value={formData.password} onChange={handleChange} required minLength={6} style={inputStyle} />
+                  <div style={{ position: 'relative' }}>
+                    <Form.Control 
+                      type={showPassword ? "text" : "password"} 
+                      name="password" 
+                      placeholder="Create a password"
+                      value={formData.password} 
+                      onChange={handleChange} 
+                      required 
+                      minLength={6} 
+                      style={{ ...inputStyle, paddingRight: '42px' }} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: T.muted,
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: 0,
+                        outline: 'none',
+                        boxShadow: 'none'
+                      }}
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </Form.Group>
               </Col>
               <Col md={6} className="mb-4">
                 <Form.Group>
                   <Form.Label className="fw-semibold" style={{ color: T.text }}>Confirm Password</Form.Label>
-                  <Form.Control type="password" name="confirmPassword" placeholder="Confirm your password"
-                    value={formData.confirmPassword} onChange={handleChange} required style={inputStyle} />
+                  <div style={{ position: 'relative' }}>
+                    <Form.Control 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      name="confirmPassword" 
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword} 
+                      onChange={handleChange} 
+                      required 
+                      style={{ ...inputStyle, paddingRight: '42px' }} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: T.muted,
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: 0,
+                        outline: 'none',
+                        boxShadow: 'none'
+                      }}
+                      title={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </Form.Group>
               </Col>
             </Row>
-            <Button className="w-100 py-2 fs-6 fw-bold text-white border-0" type="submit"
+            <Button 
+              className="w-100 py-2 fs-6 fw-bold text-white border-0" 
+              type="submit"
+              disabled={loading}
               style={{
                 background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
                 borderRadius: 10, boxShadow: '0 8px 20px rgba(124,92,255,0.35)',
-              }}>
-              Register Now
+              }}
+            >
+              {loading ? 'Registering...' : 'Register Now'}
             </Button>
           </Form>
         </Modal.Body>

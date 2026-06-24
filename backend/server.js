@@ -13,6 +13,7 @@ import courseRoutes from './routes/courseRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import testimonialRoutes from './routes/testimonialRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
+import { autoSeedIfEmpty } from './utils/autoSeed.js';
 
 dotenv.config();
 
@@ -45,5 +46,9 @@ const PORT = process.env.PORT || 5000;
 const CONNECTION_URL = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cdac-examweb';
 
 mongoose.connect(CONNECTION_URL)
-  .then(() => app.listen(PORT, () => console.log(`Server running on port: ${PORT}`)))
+  .then(async () => {
+    console.log("Connected to MongoDB.");
+    await autoSeedIfEmpty();
+    app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+  })
   .catch((error) => console.log(error.message));

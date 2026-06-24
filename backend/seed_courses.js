@@ -186,9 +186,13 @@ const pgcpVLSIData = {
   uploadDate: "27/11/2025"
 };
 
-const seedCourses = async () => {
+export { pgcpACData, pgcpASSDData, pgcpMCData, pgcpVLSIData };
+
+export const seedCourses = async (shouldExit = true) => {
   try {
-    await mongoose.connect(CONNECTION_URL);
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(CONNECTION_URL);
+    }
     console.log("Connected to MongoDB for seeding...");
     
     // Clear existing to avoid duplicates
@@ -197,11 +201,13 @@ const seedCourses = async () => {
     await Course.insertMany([pgcpACData, pgcpASSDData, pgcpMCData, pgcpVLSIData]);
     
     console.log("Courses PGCP-AC, PGCP-ASSD, PGCP-MC, and PGCP-VLSI seeded successfully!");
-    process.exit();
+    if (shouldExit) process.exit(0);
   } catch (err) {
     console.error("Seeding failed:", err);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
   }
 };
 
-seedCourses();
+if (process.argv[1] && (process.argv[1].endsWith('seed_courses.js') || process.argv[1].includes('seed_courses.js'))) {
+  seedCourses(true);
+}

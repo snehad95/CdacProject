@@ -33,7 +33,12 @@ const resultSchema = new mongoose.Schema({
       ref: 'Question',
     },
     selectedOptionText: String,
-    isCorrect: Boolean
+    subjectiveAnswer: String,
+    isCorrect: Boolean,
+    marksObtained: {
+      type: Number,
+      default: 0
+    }
   }],
   submittedAt: {
     type: Date,
