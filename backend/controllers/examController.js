@@ -4,7 +4,7 @@ import Result from '../models/Result.js';
 
 export const createExam = async (req, res) => {
   try {
-    const { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished, negativeMarking, negativeMarks, questions } = req.body;
+    const { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished, negativeMarking, negativeMarks, mcqDuration, subjectiveDuration, codingDuration, questions } = req.body;
     
     if (new Date(startTime) >= new Date(endTime)) {
       return res.status(400).json({ message: "End time must be after start time." });
@@ -21,6 +21,9 @@ export const createExam = async (req, res) => {
       resultsPublished: resultsPublished || false,
       negativeMarking: negativeMarking || false,
       negativeMarks: negativeMarks || 0,
+      mcqDuration: mcqDuration || 0,
+      subjectiveDuration: subjectiveDuration || 0,
+      codingDuration: codingDuration || 0,
       createdBy: req.user?._id || '000000000000000000000000'
     });
 
@@ -56,9 +59,23 @@ export const getExams = async (req, res) => {
 export const updateExam = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished } = req.body;
+    const { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished, negativeMarking, negativeMarks, mcqDuration, subjectiveDuration, codingDuration } = req.body;
 
-    const updatedExam = await Exam.findByIdAndUpdate(id, { title, category, description, startTime, endTime, durationMinutes, passingScore, resultsPublished }, { new: true });
+    const updatedExam = await Exam.findByIdAndUpdate(id, {
+      title,
+      category,
+      description,
+      startTime,
+      endTime,
+      durationMinutes,
+      passingScore,
+      resultsPublished,
+      negativeMarking,
+      negativeMarks,
+      mcqDuration,
+      subjectiveDuration,
+      codingDuration
+    }, { new: true });
     if (!updatedExam) return res.status(404).json({ message: "Exam not found" });
 
     res.status(200).json(updatedExam);

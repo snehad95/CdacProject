@@ -34,6 +34,12 @@ const resultSchema = new mongoose.Schema({
     },
     selectedOptionText: String,
     subjectiveAnswer: String,
+    sourceCode: String,
+    language: String,
+    testResults: {
+      passed: { type: Number, default: 0 },
+      total: { type: Number, default: 0 }
+    },
     isCorrect: Boolean,
     marksObtained: {
       type: Number,

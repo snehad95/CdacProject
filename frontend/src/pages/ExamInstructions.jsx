@@ -96,7 +96,9 @@ const ExamInstructions = () => {
     <div style={S.pageWrap}>
       {/* Top Bar */}
       <div style={S.topBar}>
-        <span style={S.logoText}>CDAC ExamWeb</span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img src="http://recruitment-portal.in/reccdac/images/logo_cdac.png" alt="CDAC Logo" style={{ height: 42, objectFit: 'contain' }} />
+        </div>
         <div style={S.userPill}>
           <div style={S.userAvatar}><User size={16} color="#fff" /></div>
           <span style={S.userName}>{user.name || user.email || 'Student'}</span>
@@ -203,7 +205,7 @@ const ExamInstructions = () => {
 };
 
 const S = {
-  pageWrap: { minHeight: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', fontFamily: "'Segoe UI', system-ui, sans-serif" },
+  pageWrap: { minHeight: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', fontFamily: "'Inter', sans-serif" },
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '14px 32px', background: T.surface, borderBottom: `1px solid ${T.border}`,
@@ -318,7 +320,7 @@ const S = {
 if (typeof document !== 'undefined' && !document.getElementById('exam-spin-kf')) {
   const s = document.createElement('style');
   s.id = 'exam-spin-kf';
-  s.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+  s.textContent = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'); @keyframes spin { to { transform: rotate(360deg); } }`;
   document.head.appendChild(s);
 }
 

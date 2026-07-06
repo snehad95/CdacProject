@@ -3,7 +3,27 @@ import Exam from '../models/Exam.js';
 
 export const addQuestion = async (req, res) => {
   try {
-    const { examId, practiceTestId, text, type, options, marks, workspaceLines } = req.body;
+    const {
+      examId,
+      practiceTestId,
+      text,
+      type,
+      options,
+      marks,
+      workspaceLines,
+      title,
+      description,
+      wordLimit,
+      sampleAnswer,
+      constraints,
+      sampleInput,
+      sampleOutput,
+      allowedLanguages,
+      timeLimit,
+      memoryLimit,
+      testCases,
+      timerDuration
+    } = req.body;
     let imageUrl = null;
     
     if (req.file) {
@@ -11,6 +31,8 @@ export const addQuestion = async (req, res) => {
     }
 
     const parsedOptions = options ? (typeof options === 'string' ? JSON.parse(options) : options) : [];
+    const parsedAllowedLanguages = allowedLanguages ? (typeof allowedLanguages === 'string' ? JSON.parse(allowedLanguages) : allowedLanguages) : ['java', 'python', 'cpp'];
+    const parsedTestCases = testCases ? (typeof testCases === 'string' ? JSON.parse(testCases) : testCases) : [];
 
     const newQuestion = new Question({
       examId: examId || undefined,
@@ -20,7 +42,19 @@ export const addQuestion = async (req, res) => {
       options: parsedOptions,
       imageUrl,
       marks: Number(marks) || 1,
-      workspaceLines: Number(workspaceLines) || 10
+      workspaceLines: Number(workspaceLines) || 10,
+      title: title || '',
+      description: description || '',
+      wordLimit: Number(wordLimit) || 500,
+      sampleAnswer: sampleAnswer || '',
+      constraints: constraints || '',
+      sampleInput: sampleInput || '',
+      sampleOutput: sampleOutput || '',
+      allowedLanguages: parsedAllowedLanguages,
+      timeLimit: Number(timeLimit) || 2,
+      memoryLimit: Number(memoryLimit) || 256,
+      testCases: parsedTestCases,
+      timerDuration: Number(timerDuration) || 0
     });
 
     await newQuestion.save();
@@ -72,7 +106,19 @@ export const addQuestionsBulk = async (req, res) => {
       type: q.type || 'mcq',
       options: q.options || [],
       marks: Number(q.marks) || 1,
-      workspaceLines: Number(q.workspaceLines) || 10
+      workspaceLines: Number(q.workspaceLines) || 10,
+      title: q.title || '',
+      description: q.description || '',
+      wordLimit: Number(q.wordLimit) || 500,
+      sampleAnswer: q.sampleAnswer || '',
+      constraints: q.constraints || '',
+      sampleInput: q.sampleInput || '',
+      sampleOutput: q.sampleOutput || '',
+      allowedLanguages: q.allowedLanguages || ['java', 'python', 'cpp'],
+      timeLimit: Number(q.timeLimit) || 2,
+      memoryLimit: Number(q.memoryLimit) || 256,
+      testCases: q.testCases || [],
+      timerDuration: Number(q.timerDuration) || 0
     }));
 
     const inserted = await Question.insertMany(parsedQuestions);

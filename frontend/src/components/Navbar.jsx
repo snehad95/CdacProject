@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Nav, Container, Button, Modal, Form } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import LoginModal from './LoginModal';
-import RegisterModal from './RegisterModal';
+import { User, Mail, Lock, Eye, EyeOff, LogOut } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -19,8 +17,6 @@ const AppNavbar = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -60,7 +56,7 @@ const AppNavbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/');
+    window.location.href = '/';
   };
 
   const isActive = (path) => {
@@ -156,7 +152,7 @@ const AppNavbar = () => {
               )}
             </Nav>
             <div className="d-flex gap-2 align-items-center">
-              {token ? (
+              {token && (
                 <>
                   <div 
                     onClick={() => setShowProfile(true)}
@@ -176,22 +172,10 @@ const AppNavbar = () => {
                     </span>
                   </div>
 
-                  <Button onClick={handleLogout} className="fw-semibold px-3"
-                    style={{ background: 'transparent', border: `2px solid ${T.primaryDeep}`, color: T.primaryDeep, borderRadius: 10 }}>
-                    Logout
+                  <Button onClick={handleLogout} className="fw-bold px-3 py-2 d-flex align-items-center gap-2 border-0 shadow-sm"
+                    style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#ffffff', borderRadius: 10, fontSize: '0.88rem' }}>
+                    <LogOut size={16} /> Logout
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Button className="fw-semibold px-4"
-                    style={{ background: 'transparent', border: `2px solid ${T.primaryDeep}`, color: T.primaryDeep, borderRadius: 10 }}
-                    onClick={() => setShowLogin(true)}>Login</Button>
-                  <Button className="fw-semibold px-4 text-white border-0"
-                    style={{
-                      background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
-                      borderRadius: 10, boxShadow: '0 6px 16px rgba(124,92,255,0.35)',
-                    }}
-                    onClick={() => setShowRegister(true)}>Register</Button>
                 </>
               )}
             </div>
@@ -199,61 +183,43 @@ const AppNavbar = () => {
         </Container>
       </Navbar>
 
-      <LoginModal show={showLogin} handleClose={() => setShowLogin(false)} />
-      <RegisterModal show={showRegister} handleClose={() => setShowRegister(false)} />
-
       <Modal show={showProfile} onHide={() => setShowProfile(false)} centered>
-        <div style={{ background: T.surface, borderRadius: 20, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}>
-          <div style={{ height: 6, background: `linear-gradient(90deg, ${T.primary}, ${T.primaryDeep})` }} />
-          <Modal.Header closeButton className="border-0 pb-0">
-            <Modal.Title className="fw-bold w-100 text-center" style={{ color: T.primaryDeep, fontSize: '1.4rem' }}>
+        <div style={{ background: '#ffffff', borderRadius: 24, overflow: 'hidden', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.1)' }}>
+          <Modal.Header closeButton className="border-0 pb-0 pt-4 px-4 px-md-5">
+            <Modal.Title className="fw-bold text-dark" style={{ fontSize: '1.35rem', letterSpacing: '-0.3px' }}>
               Account Settings
             </Modal.Title>
           </Modal.Header>
           <Modal.Body className="px-4 py-4 px-md-5">
-            {/* Avatar Header */}
-            <div className="d-flex flex-column align-items-center mb-4">
+            {/* Light Executive Avatar Header */}
+            <div className="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <div style={{
-                width: 76,
-                height: 76,
+                width: 54,
+                height: 54,
                 borderRadius: '50%',
-                background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
+                background: '#eff6ff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 24px rgba(124,92,255,0.25)',
-                color: '#fff',
-                fontSize: '1.8rem',
+                color: '#3b82f6',
+                fontSize: '1.35rem',
                 fontWeight: 700,
-                border: '4px solid #fff',
-                marginBottom: 12
+                border: '1.5px solid #bfdbfe',
+                flexShrink: 0
               }}>
                 {(profileData.name || user?.name || 'U').charAt(0).toUpperCase()}
               </div>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: T.text }}>{profileData.name || user?.name}</div>
-              <div style={{ fontSize: '0.82rem', color: T.muted, marginBottom: 8 }}>{profileData.email || user?.email}</div>
-              {user?.role && (
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  padding: '4px 12px',
-                  borderRadius: 12,
-                  letterSpacing: '0.5px',
-                  background: user.role === 'admin' ? 'rgba(225, 29, 72, 0.1)' : user.role === 'teacher' ? 'rgba(217, 119, 6, 0.1)' : 'rgba(22, 163, 74, 0.1)',
-                  color: user.role === 'admin' ? '#e11d48' : user.role === 'teacher' ? '#d97706' : '#16a34a',
-                  border: `1px solid ${user.role === 'admin' ? 'rgba(225, 29, 72, 0.2)' : user.role === 'teacher' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(22, 163, 74, 0.2)'}`
-                }}>
-                  {user.role} Portal
-                </span>
-              )}
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#0f172a' }}>{profileData.name || user?.name}</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{profileData.email || user?.email}</div>
+              </div>
             </div>
 
             <Form onSubmit={handleProfileUpdate}>
               <Form.Group className="mb-3">
-                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>Full Name</Form.Label>
+                <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>Full Name</Form.Label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: T.muted, opacity: 0.8 }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#94a3b8' }}>
                     <User size={18} />
                   </span>
                   <Form.Control 
@@ -261,15 +227,15 @@ const AppNavbar = () => {
                     value={profileData.name} 
                     onChange={e => setProfileData({ ...profileData, name: e.target.value })} 
                     required
-                    style={{ border: `1px solid ${T.border}`, borderRadius: 12, padding: '11px 14px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                    style={{ border: '1.5px solid #cbd5e1', borderRadius: 12, padding: '12px 16px 12px 42px', fontSize: '0.95rem', background: '#f8fafc', color: '#0f172a', fontWeight: 500 }} 
                   />
                 </div>
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>Email Address</Form.Label>
+                <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>Email Address</Form.Label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: T.muted, opacity: 0.8 }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#94a3b8' }}>
                     <Mail size={18} />
                   </span>
                   <Form.Control 
@@ -277,23 +243,23 @@ const AppNavbar = () => {
                     value={profileData.email} 
                     onChange={e => setProfileData({ ...profileData, email: e.target.value })} 
                     required
-                    style={{ border: `1px solid ${T.border}`, borderRadius: 12, padding: '11px 14px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                    style={{ border: '1.5px solid #cbd5e1', borderRadius: 12, padding: '12px 16px 12px 42px', fontSize: '0.95rem', background: '#f8fafc', color: '#0f172a', fontWeight: 500 }} 
                   />
                 </div>
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Label className="small fw-bold text-uppercase text-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>New Password <span className="text-lowercase" style={{ fontWeight: 400 }}>(leave blank to keep current)</span></Form.Label>
+                <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>New Password <span className="text-lowercase" style={{ fontWeight: 400, color: '#64748b' }}>(leave blank to keep current)</span></Form.Label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: T.muted, opacity: 0.8 }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#94a3b8' }}>
                     <Lock size={18} />
                   </span>
                   <Form.Control 
                     type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
+                    placeholder="Create a new password" 
                     value={profileData.password} 
                     onChange={e => setProfileData({ ...profileData, password: e.target.value })} 
-                    style={{ border: `1px solid ${T.border}`, borderRadius: 12, padding: '11px 42px 11px 40px', fontSize: '0.95rem', background: '#fcfaff' }} 
+                    style={{ border: '1.5px solid #cbd5e1', borderRadius: 12, padding: '12px 42px 12px 42px', fontSize: '0.95rem', background: '#f8fafc', color: '#0f172a', fontWeight: 500 }} 
                   />
                   <button
                     type="button"
@@ -306,12 +272,10 @@ const AppNavbar = () => {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: T.muted,
+                      color: '#64748b',
                       display: 'flex',
                       alignItems: 'center',
-                      padding: 0,
-                      outline: 'none',
-                      boxShadow: 'none'
+                      padding: 0
                     }}
                     title={showPassword ? "Hide password" : "Show password"}
                   >
@@ -320,23 +284,23 @@ const AppNavbar = () => {
                 </div>
               </Form.Group>
 
-              <div className="d-flex gap-3">
+              <div className="d-flex gap-3 pt-1">
                 <Button 
                   variant="light" 
-                  className="w-50 py-2 fw-bold" 
+                  className="w-50 py-2.5 fw-bold" 
                   onClick={() => setShowProfile(false)}
-                  style={{ borderRadius: 12, border: `1px solid ${T.border}`, padding: '10px 0', fontSize: '0.95rem' }}
+                  style={{ borderRadius: 12, border: '1px solid #cbd5e1', padding: '11px 0', fontSize: '0.95rem', background: '#f1f5f9', color: '#334155' }}
                 >
                   Cancel
                 </Button>
                 <Button 
-                  className="w-50 py-2 fw-bold text-white border-0" 
+                  className="w-50 py-2.5 fw-bold text-white border-0" 
                   type="submit"
                   style={{
                     background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`,
                     borderRadius: 12, 
-                    boxShadow: '0 8px 20px rgba(124,92,255,0.3)',
-                    padding: '10px 0',
+                    boxShadow: '0 10px 25px rgba(124,92,255,0.35)',
+                    padding: '11px 0',
                     fontSize: '0.95rem'
                   }}
                 >

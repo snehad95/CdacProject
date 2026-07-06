@@ -20,6 +20,7 @@ export const submitExam = async (req, res) => {
     const gradedAnswers = answers.map(ans => {
       const question = questions.find(q => q._id.toString() === ans.questionId);
       const isSubjective = question && question.type === 'subjective';
+      const isCoding = question && question.type === 'coding';
       const qMarks = question ? (question.marks || 1) : 1;
       
       if (isSubjective) {
@@ -31,6 +32,20 @@ export const submitExam = async (req, res) => {
           subjectiveAnswer: ans.subjectiveAnswer,
           isCorrect: false,
           marksObtained: 0
+        };
+      } else if (isCoding) {
+        if (ans.sourceCode) {
+          attemptedQuestions += 1;
+        }
+        const marksAwarded = Number(ans.marksObtained) || 0;
+        score += marksAwarded;
+        return {
+          questionId: ans.questionId,
+          sourceCode: ans.sourceCode,
+          language: ans.language,
+          testResults: ans.testResults || { passed: 0, total: 0 },
+          isCorrect: marksAwarded === qMarks,
+          marksObtained: marksAwarded
         };
       } else {
         const isCorrect = question && question.options.find(opt => opt.text === ans.selectedOptionText)?.isCorrect;

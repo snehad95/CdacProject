@@ -214,7 +214,7 @@ const StudentDashboard = () => {
                                 Already Attempted
                               </Button>
                             ) : (
-                              <Button size="sm" className="text-white fw-semibold px-3" style={{ backgroundColor: '#7c5cff', border: 'none' }} onClick={() => navigate(`/exam-instructions/${exam._id}`)}>Start Exam</Button>
+                              <Button size="sm" className="text-white fw-semibold px-3" style={{ backgroundColor: '#7c5cff', border: 'none' }} onClick={() => navigate(`/exam/${exam._id}`)}>Start Exam</Button>
                             )}
                           </div>
                         </Card.Body>

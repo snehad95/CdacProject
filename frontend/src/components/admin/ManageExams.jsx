@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 const emptyForm = {
   title: '', category: '', description: '',
   startTime: '', endTime: '', durationMinutes: '', totalMarks: '', passingScore: 40, 
-  resultsPublished: false, negativeMarking: false, negativeMarks: 0.25
+  resultsPublished: false, negativeMarking: false, negativeMarks: 0.25,
+  mcqDuration: 0, subjectiveDuration: 0, codingDuration: 0
 };
 
 // Helper: format datetime-local value from ISO string
@@ -300,7 +301,10 @@ const ManageExams = () => {
       passingScore: exam.passingScore || 40,
       resultsPublished: exam.resultsPublished || false,
       negativeMarking: exam.negativeMarking || false,
-      negativeMarks: exam.negativeMarks || 0
+      negativeMarks: exam.negativeMarks || 0,
+      mcqDuration: exam.mcqDuration || 0,
+      subjectiveDuration: exam.subjectiveDuration || 0,
+      codingDuration: exam.codingDuration || 0
     });
     setEditAutoDuration(calcDuration(exam.startTime, exam.endTime));
     setShowEdit(true);
@@ -529,6 +533,34 @@ const ManageExams = () => {
                 />
               </Col>
               
+              <Col md={4} className="mb-4">
+                <Form.Label className="small fw-bold text-uppercase text-muted ls-1">MCQ Section Duration (mins)</Form.Label>
+                <Form.Control
+                  type="number" placeholder="0 for unlimited"
+                  value={formData.mcqDuration}
+                  onChange={e => setFormData({ ...formData, mcqDuration: Number(e.target.value) || 0 })}
+                  className="rounded-3 border-light bg-light shadow-none"
+                />
+              </Col>
+              <Col md={4} className="mb-4">
+                <Form.Label className="small fw-bold text-uppercase text-muted ls-1">Subjective Section Duration (mins)</Form.Label>
+                <Form.Control
+                  type="number" placeholder="0 for unlimited"
+                  value={formData.subjectiveDuration}
+                  onChange={e => setFormData({ ...formData, subjectiveDuration: Number(e.target.value) || 0 })}
+                  className="rounded-3 border-light bg-light shadow-none"
+                />
+              </Col>
+              <Col md={4} className="mb-4">
+                <Form.Label className="small fw-bold text-uppercase text-muted ls-1">Coding Section Duration (mins)</Form.Label>
+                <Form.Control
+                  type="number" placeholder="0 for unlimited"
+                  value={formData.codingDuration}
+                  onChange={e => setFormData({ ...formData, codingDuration: Number(e.target.value) || 0 })}
+                  className="rounded-3 border-light bg-light shadow-none"
+                />
+              </Col>
+              
               <Col md={12} className="mb-4">
                 <div className="p-3 rounded-4 border bg-white shadow-sm d-flex align-items-center justify-content-between">
                   <div className="d-flex align-items-center gap-3">
@@ -732,6 +764,34 @@ const ManageExams = () => {
                   value={editData.passingScore}
                   onChange={e => setEditData({ ...editData, passingScore: e.target.value })}
                   required className="rounded-3 border-light bg-light shadow-none"
+                />
+              </Col>
+              
+              <Col md={4} className="mb-3">
+                <Form.Label className="small fw-bold text-uppercase text-muted ls-1">MCQ Section Duration (mins)</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={editData.mcqDuration}
+                  onChange={e => setEditData({ ...editData, mcqDuration: Number(e.target.value) || 0 })}
+                  className="rounded-3 border-light bg-light shadow-none"
+                />
+              </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label className="small fw-bold text-uppercase text-muted ls-1">Subjective Section Duration (mins)</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={editData.subjectiveDuration}
+                  onChange={e => setEditData({ ...editData, subjectiveDuration: Number(e.target.value) || 0 })}
+                  className="rounded-3 border-light bg-light shadow-none"
+                />
+              </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label className="small fw-bold text-uppercase text-muted ls-1">Coding Section Duration (mins)</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={editData.codingDuration}
+                  onChange={e => setEditData({ ...editData, codingDuration: Number(e.target.value) || 0 })}
+                  className="rounded-3 border-light bg-light shadow-none"
                 />
               </Col>
               <Col md={12} className="mb-3">

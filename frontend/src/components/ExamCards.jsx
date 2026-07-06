@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import LoginModal from './LoginModal';
-import RegisterModal from './RegisterModal';
 
 const T = {
   bg: 'var(--cdac-bg)', surface: 'var(--cdac-surface)', primary: '#7c5cff', primaryDeep: '#6a41e6',
@@ -13,15 +11,10 @@ const T = {
 
 const ExamCards = () => {
   const navigate = useNavigate();
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
   const [exploreHovered, setExploreHovered] = useState(false);
 
   const handleQuizClick = (categoryTitle) => {
-    const token = localStorage.getItem('token');
-    if (!token) setShowPrompt(true);
-    else navigate(`/practice-instructions/${encodeURIComponent(categoryTitle)}`);
+    navigate(`/practice-instructions/${encodeURIComponent(categoryTitle)}`);
   };
 
   const defaultCategories = [
@@ -161,27 +154,6 @@ const ExamCards = () => {
           </motion.button>
         </div>
 
-        <Modal show={showPrompt} onHide={() => setShowPrompt(false)} centered>
-          <Modal.Header closeButton className="border-0 pb-0">
-            <Modal.Title className="fw-bold w-100 text-center" style={{ color: T.primaryDeep }}>
-              Login Required
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body className="text-center p-4">
-            <p className="mb-4 fs-6" style={{ color: T.muted }}>You must login or register first to start a quiz.</p>
-            <div className="d-flex justify-content-center gap-3">
-              <Button className="px-4 py-2 fw-semibold text-white border-0"
-                style={{ background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDeep})`, borderRadius: 10 }}
-                onClick={() => { setShowPrompt(false); setShowLogin(true); }}>Login</Button>
-              <Button className="px-4 py-2 fw-semibold"
-                style={{ border: `2px solid ${T.primaryDeep}`, color: T.primaryDeep, background: 'transparent', borderRadius: 10 }}
-                onClick={() => { setShowPrompt(false); setShowRegister(true); }}>Register</Button>
-            </div>
-          </Modal.Body>
-        </Modal>
-
-        <LoginModal show={showLogin} handleClose={() => setShowLogin(false)} />
-        <RegisterModal show={showRegister} handleClose={() => setShowRegister(false)} />
       </Container>
     </div>
   );

@@ -49,6 +49,18 @@ const examSchema = new mongoose.Schema({
   negativeMarks: {
     type: Number,
     default: 0
+  },
+  mcqDuration: {
+    type: Number,
+    default: 0
+  },
+  subjectiveDuration: {
+    type: Number,
+    default: 0
+  },
+  codingDuration: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true });
 

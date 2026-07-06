@@ -19,6 +19,7 @@ import PracticeInstructions from './pages/PracticeInstructions';
 import PracticeArena from './pages/PracticeArena';
 
 import CourseDetails from './pages/CourseDetails';
+import AuthLandingPage from './pages/AuthLandingPage';
 import { Toaster } from 'react-hot-toast';
 
 // Scroll to top on every page navigation
@@ -39,11 +40,16 @@ function LayoutShell({ children }) {
   const isPanel = pathname.startsWith('/admin') || pathname.startsWith('/teacher');
   const isUserLoggedIn = !!localStorage.getItem('token');
 
+  const [navbarVisible, setNavbarVisible] = React.useState(true);
+  const footerRef = React.useRef(null);
+
   // Disable navbar auto-hiding on dashboard and panels
   const disableNavbarHide = pathname === '/dashboard' || isPanel;
 
-  const [navbarVisible, setNavbarVisible] = React.useState(true);
-  const footerRef = React.useRef(null);
+  // If user is unauthenticated, show the Gateway/Auth Landing Page
+  if (!isUserLoggedIn) {
+    return <AuthLandingPage />;
+  }
 
   React.useEffect(() => {
     const storedTheme = localStorage.getItem('theme') || 'light';

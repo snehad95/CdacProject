@@ -8,8 +8,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import LoginModal from '../components/LoginModal';
-import RegisterModal from '../components/RegisterModal';
 
 const THEME = {
   bg: 'var(--cdac-bg)',
@@ -302,9 +300,6 @@ const Exams = () => {
   const [examsByCat, setExamsByCat] = useState({});
   const [hoveredCard, setHoveredCard] = useState(null);
   const [attemptedIds, setAttemptedIds] = useState(new Set());
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showReg, setShowReg] = useState(false);
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -344,12 +339,7 @@ const Exams = () => {
   }, []);
 
   const handleOpen = (examId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setShowPrompt(true);
-    } else {
-      navigate(`/exam-instructions/${examId}`);
-    }
+    navigate(`/exam-instructions/${examId}`);
   };
 
   let globalIndex = 0;
@@ -379,38 +369,7 @@ const Exams = () => {
           </p>
         </motion.div>
 
-        {/* Login prompt modal */}
-        <Modal show={showPrompt} onHide={() => setShowPrompt(false)} centered>
-          <Modal.Header closeButton className="border-0 pb-0">
-            <Modal.Title className="fw-bold w-100 text-center" style={{ color: THEME.primary }}>
-              Login Required
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body className="text-center p-4">
-            <p className="mb-4 fs-6" style={{ color: THEME.textMuted }}>
-              You must login or register first to open an exam.
-            </p>
-            <div className="d-flex justify-content-center gap-3">
-              <Button
-                className="px-4 py-2 fw-semibold text-white border-0"
-                style={{ background: `linear-gradient(135deg, ${THEME.primary}, ${THEME.primarySoft})`, borderRadius: '10px' }}
-                onClick={() => { setShowPrompt(false); setShowLogin(true); }}
-              >
-                Login
-              </Button>
-              <Button
-                className="px-4 py-2 fw-semibold"
-                style={{ border: `2px solid ${THEME.primary}`, color: THEME.primary, background: 'transparent', borderRadius: '10px' }}
-                onClick={() => { setShowPrompt(false); setShowReg(true); }}
-              >
-                Register
-              </Button>
-            </div>
-          </Modal.Body>
-        </Modal>
 
-        <LoginModal show={showLogin} handleClose={() => setShowLogin(false)} />
-        <RegisterModal show={showReg} handleClose={() => setShowReg(false)} />
 
         {Object.keys(examsByCat).length === 0 && (
           <div className="text-center py-5">
