@@ -32,12 +32,27 @@ export const createExam = async (req, res) => {
     if (questions && questions.length > 0) {
       const questionsToInsert = questions.map(q => ({
         examId: newExam._id,
-        text: q.text,
-        options: q.options
+        text: q.text || '',
+        type: q.type || 'mcq',
+        options: q.options || [],
+        marks: Number(q.marks) || 1,
+        workspaceLines: Number(q.workspaceLines) || 10,
+        title: q.title || '',
+        description: q.description || '',
+        wordLimit: Number(q.wordLimit) || 500,
+        sampleAnswer: q.sampleAnswer || '',
+        constraints: q.constraints || '',
+        sampleInput: q.sampleInput || '',
+        sampleOutput: q.sampleOutput || '',
+        allowedLanguages: q.allowedLanguages || ['java', 'python', 'cpp'],
+        timeLimit: Number(q.timeLimit) || 2,
+        memoryLimit: Number(q.memoryLimit) || 256,
+        testCases: q.testCases || [],
+        timerDuration: Number(q.timerDuration) || 0
       }));
       await Question.insertMany(questionsToInsert);
       
-      newExam.totalMarks = questions.length;
+      newExam.totalMarks = questionsToInsert.reduce((acc, q) => acc + (q.marks || 1), 0);
       await newExam.save();
     }
 

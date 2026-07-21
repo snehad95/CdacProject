@@ -70,6 +70,7 @@ const TestCard = ({ cat, scrollDirection, onQuizClick }) => {
       whileTap={{ scale: 0.98 }}
       className="h-100"
       style={{ cursor: 'pointer' }}
+      onClick={onQuizClick}
     >
       <Card
         className="h-100 border-0 text-center"

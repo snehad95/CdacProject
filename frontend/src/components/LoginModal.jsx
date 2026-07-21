@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,14 @@ const LoginModal = ({ show, handleClose }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (show) {
+      setEmail('');
+      setPassword('');
+      setError('');
+    }
+  }, [show]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -56,11 +64,11 @@ const LoginModal = ({ show, handleClose }) => {
             <div className="p-2 mb-3 rounded text-center"
               style={{ background: '#fdecec', color: '#b42318', fontSize: 14 }}>{error}</div>
           )}
-          <Form onSubmit={handleLogin}>
+          <Form onSubmit={handleLogin} autoComplete="off">
             <Form.Group className="mb-3">
               <Form.Label className="fw-semibold" style={{ color: T.text }}>Email address</Form.Label>
               <Form.Control type="email" placeholder="you@example.com" value={email}
-                onChange={(e) => setEmail(e.target.value)} required
+                onChange={(e) => setEmail(e.target.value)} required autoComplete="off"
                 style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px' }} />
             </Form.Group>
             <Form.Group className="mb-4">
@@ -72,6 +80,7 @@ const LoginModal = ({ show, handleClose }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)} 
                   required
+                  autoComplete="new-password"
                   style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 42px 10px 14px' }} 
                 />
                 <button

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Form, Row, Col } from 'react-bootstrap';
+import { Card, Table, Button, Form, Row, Col, Nav } from 'react-bootstrap';
+import { Upload, FileSpreadsheet, Download } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -8,6 +9,13 @@ const ManageQuestions = () => {
   const [questions, setQuestions] = useState([]);
   
   const [selectedExamForView, setSelectedExamForView] = useState('');
+
+  // Bulk Upload states
+  const [activeTab, setActiveTab] = useState('single');
+  const [bulkExamId, setBulkExamId] = useState('');
+  const [bulkDataText, setBulkDataText] = useState('');
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     examId: '',
@@ -115,7 +123,7 @@ const ManageQuestions = () => {
 
     const data = new FormData();
     data.append('examId', formData.examId);
-    data.append('text', formData.text);
+    data.append('text', isCoding ? (formData.description || formData.title || 'Coding Problem') : formData.text);
     data.append('type', formData.type);
     data.append('options', JSON.stringify(optionsArray));
     data.append('marks', formData.marks);
@@ -190,12 +198,168 @@ const ManageQuestions = () => {
     }));
   };
 
+  const handleDownloadSampleCsv = () => {
+    const csvContent = `text,type,option1,isCorrect1,option2,isCorrect2,option3,isCorrect3,option4,isCorrect4,marks,timeLimit\n"What is the output of 2 + 2 in JavaScript?","mcq","3","false","4","true","5","false","22","false","1","2"\n"Which keyword is used to declare a constant in ES6?","mcq","var","false","let","false","const","true","def","false","1","2"\n"Explain the concept of Closures in JavaScript with an example.","subjective","","false","","false","","false","","false","5","5"`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "sample_questions_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const parseCsvToQuestions = (csvText) => {
+    const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+    if (lines.length < 2) throw new Error("CSV must contain a header row and at least one data row.");
+    
+    const parseCsvLine = (line) => {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"' && (i === 0 || line[i-1] !== '\\')) {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(cur.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+          cur = '';
+        } else {
+          cur += char;
+        }
+      }
+      result.push(cur.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+      return result;
+    };
+
+    const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
+    const questionsList = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCsvLine(lines[i]);
+      if (values.length === 0 || !values[0]) continue;
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
+      });
+
+      const type = (row.type || 'mcq').toLowerCase();
+      const isSubjective = type === 'subjective';
+      const isCoding = type === 'coding';
+      const options = (isSubjective || isCoding) ? [] : [
+        { text: row.option1 || '', isCorrect: String(row.iscorrect1).toLowerCase() === 'true' },
+        { text: row.option2 || '', isCorrect: String(row.iscorrect2).toLowerCase() === 'true' },
+        { text: row.option3 || '', isCorrect: String(row.iscorrect3).toLowerCase() === 'true' },
+        { text: row.option4 || '', isCorrect: String(row.iscorrect4).toLowerCase() === 'true' }
+      ];
+
+      questionsList.push({
+        text: row.text || 'Untitled Question',
+        type: type,
+        options: options,
+        marks: Number(row.marks) || 1,
+        timeLimit: Number(row.timelimit) || 2,
+        workspaceLines: 10,
+        wordLimit: 500
+      });
+    }
+    return questionsList;
+  };
+
+  const handleBulkSubmit = async (e) => {
+    e.preventDefault();
+    if (!bulkExamId) return toast.error("Please select a target exam for bulk upload!");
+    
+    setBulkLoading(true);
+    try {
+      let content = bulkDataText;
+      if (bulkFile) {
+        content = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target.result);
+          reader.onerror = (error) => reject(error);
+          reader.readAsText(bulkFile);
+        });
+      }
+
+      if (!content || !content.trim()) {
+        setBulkLoading(false);
+        return toast.error("Please upload a file or paste JSON/CSV data!");
+      }
+
+      let parsedQuestions = [];
+      const trimmed = content.trim();
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        const json = JSON.parse(trimmed);
+        parsedQuestions = Array.isArray(json) ? json : [json];
+      } else {
+        parsedQuestions = parseCsvToQuestions(trimmed);
+      }
+
+      if (parsedQuestions.length === 0) {
+        setBulkLoading(false);
+        return toast.error("No valid questions found to import!");
+      }
+
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:5000/api/questions/bulk', {
+        examId: bulkExamId,
+        questions: parsedQuestions
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success(`Successfully imported ${parsedQuestions.length} questions!`);
+      setBulkDataText('');
+      setBulkFile(null);
+      if (selectedExamForView === bulkExamId || !selectedExamForView) {
+        setSelectedExamForView(bulkExamId);
+        fetchQuestions(bulkExamId);
+      }
+      setActiveTab('single');
+    } catch (err) {
+      console.error("Bulk upload error:", err);
+      toast.error(err.response?.data?.message || err.message || "Failed to process bulk upload");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   return (
     <div>
-      <Card className="mb-4 shadow-sm">
-        <Card.Body>
-          <Card.Title className="fw-bold mb-3 border-bottom pb-2">Add New Question</Card.Title>
-          <Form onSubmit={handleSubmit}>
+      <Card className="mb-4 shadow-sm border-0 rounded-4 overflow-hidden" style={{ border: '1px solid #ede9fe' }}>
+        <div className="bg-light px-4 pt-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            Add Questions to Exam
+          </h5>
+          <Nav variant="pills" className="custom-pills gap-2 mb-2">
+            <Nav.Item>
+              <Nav.Link 
+                active={activeTab === 'single'} 
+                onClick={() => setActiveTab('single')}
+                className="py-1 px-3 small fw-semibold"
+                style={{ cursor: 'pointer', borderRadius: '8px', backgroundColor: activeTab === 'single' ? '#7c5cff' : 'transparent', color: activeTab === 'single' ? '#fff' : '#64748b' }}
+              >
+                Single Question
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link 
+                active={activeTab === 'bulk'} 
+                onClick={() => setActiveTab('bulk')}
+                className="py-1 px-3 small fw-semibold d-flex align-items-center gap-1"
+                style={{ cursor: 'pointer', borderRadius: '8px', backgroundColor: activeTab === 'bulk' ? '#7c5cff' : 'transparent', color: activeTab === 'bulk' ? '#fff' : '#64748b' }}
+              >
+                <Upload size={14} /> Bulk Upload (CSV/JSON)
+              </Nav.Link>
+            </Nav.Item>
+          </Nav>
+        </div>
+        
+        <Card.Body className="p-4">
+          {activeTab === 'single' ? (
+            <Form onSubmit={handleSubmit}>
             <Row>
               <Col md={4} className="mb-3">
                 <Form.Label className="small fw-semibold text-muted">Target Exam</Form.Label>
@@ -461,7 +625,89 @@ const ManageQuestions = () => {
               )}
             </Row>
             <Button type="submit" variant="info" className="px-5 text-white fw-bold mt-2">Add Question</Button>
-          </Form>
+            </Form>
+          ) : (
+            <Form onSubmit={handleBulkSubmit}>
+              <div className="p-3 mb-4 rounded-3 bg-light border border-dashed d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                  <h6 className="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
+                    <FileSpreadsheet size={18} className="text-success" /> Prepare Your Question Bank
+                  </h6>
+                  <p className="text-muted small mb-0">
+                    Upload a CSV file or paste formatted JSON array. Use our standard template for best results.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline-success" 
+                  size="sm" 
+                  onClick={handleDownloadSampleCsv}
+                  className="fw-semibold d-flex align-items-center gap-1 py-2 px-3"
+                  style={{ borderRadius: '8px' }}
+                >
+                  <Download size={15} /> Download Sample CSV Template
+                </Button>
+              </div>
+
+              <Row>
+                <Col md={6} className="mb-3">
+                  <Form.Label className="small fw-semibold text-muted">Target Exam</Form.Label>
+                  <Form.Select
+                    value={bulkExamId}
+                    onFocus={fetchExams}
+                    onChange={e => setBulkExamId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Target Exam...</option>
+                    {exams.map(ex => <option key={ex._id} value={ex._id}>{ex.title}</option>)}
+                  </Form.Select>
+                </Col>
+
+                <Col md={6} className="mb-3">
+                  <Form.Label className="small fw-semibold text-muted">Upload CSV / JSON File</Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept=".csv,.json,.txt"
+                    onChange={e => setBulkFile(e.target.files[0])}
+                  />
+                  <Form.Text className="text-muted small">Supports .csv or .json files</Form.Text>
+                </Col>
+
+                <Col md={12} className="mb-4">
+                  <Form.Label className="small fw-semibold text-muted">Or Paste CSV / JSON Content Direct</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={6}
+                    placeholder={`Paste CSV data or JSON array here...\ne.g.\n[{"text": "What is 2+2?", "type": "mcq", "marks": 1, "options": [{"text": "4", "isCorrect": true}, {"text": "5", "isCorrect": false}]}]`}
+                    value={bulkDataText}
+                    onChange={e => setBulkDataText(e.target.value)}
+                    disabled={!!bulkFile}
+                    style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
+                  />
+                  {bulkFile && <Form.Text className="text-success small fw-semibold">✔ File selected ({bulkFile.name}). Clear file input to paste manual text.</Form.Text>}
+                </Col>
+              </Row>
+
+              <div className="d-flex justify-content-end gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline-secondary" 
+                  onClick={() => { setBulkFile(null); setBulkDataText(''); }}
+                  disabled={bulkLoading}
+                >
+                  Clear
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  className="px-5 text-white fw-bold d-flex align-items-center gap-2"
+                  style={{ backgroundColor: '#7c5cff', border: 'none' }}
+                  disabled={bulkLoading}
+                >
+                  <Upload size={16} /> {bulkLoading ? 'Importing Questions...' : 'Import Questions'}
+                </Button>
+              </div>
+            </Form>
+          )}
         </Card.Body>
       </Card>
 

@@ -22,6 +22,12 @@ const StudentDashboard = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState('');
 
+  // Dynamic Certificate & Report Card state
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [selectedCertData, setSelectedCertData] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReportData, setSelectedReportData] = useState(null);
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -297,32 +303,54 @@ const StudentDashboard = () => {
                           </Card.Text>
                         </div>
 
-                        {associatedCert && (
-                          <div className="mt-3 pt-3 border-top">
-                            <div className="d-flex align-items-center gap-1 mb-2 text-warning fw-bold small">
-                              <Award size={15} /> Certificate Issued (PDF)
-                            </div>
-                            <div className="d-flex gap-2">
-                              <a 
-                                href={associatedCert.pdfUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="btn btn-sm btn-outline-primary py-1 px-2 d-flex align-items-center justify-content-center gap-1 flex-grow-1"
-                                style={{ fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #7c5cff', color: '#7c5cff' }}
-                              >
-                                <Eye size={12} /> Open PDF
-                              </a>
+                        <div className="mt-3 pt-3 border-top d-flex flex-column gap-2">
+                          {associatedCert ? (
+                            associatedCert.pdfUrl === 'DYNAMIC_CERTIFICATE' ? (
                               <Button 
                                 size="sm"
-                                onClick={() => downloadCertificate(associatedCert.pdfUrl, `Certificate_${result.examId?.title.replace(/\s+/g, '_') || 'Exam'}.pdf`)}
-                                className="text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 flex-grow-1"
-                                style={{ fontSize: '0.75rem', backgroundColor: '#7c5cff', border: 'none', borderRadius: '6px' }}
+                                onClick={() => { setSelectedCertData(result); setShowCertModal(true); }}
+                                className="w-100 text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 fw-semibold"
+                                style={{ fontSize: '0.78rem', backgroundColor: '#d97706', border: 'none', borderRadius: '6px' }}
                               >
-                                <Download size={12} /> Download
+                                <Award size={14} /> Generate & Download Certificate
                               </Button>
-                            </div>
-                          </div>
-                        )}
+                            ) : (
+                              <div>
+                                <div className="d-flex align-items-center gap-1 mb-2 text-warning fw-bold small">
+                                  <Award size={15} /> Certificate Issued (PDF)
+                                </div>
+                                <div className="d-flex gap-2">
+                                  <a 
+                                    href={associatedCert.pdfUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="btn btn-sm btn-outline-primary py-1 px-2 d-flex align-items-center justify-content-center gap-1 flex-grow-1"
+                                    style={{ fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #7c5cff', color: '#7c5cff' }}
+                                  >
+                                    <Eye size={12} /> Open PDF
+                                  </a>
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => downloadCertificate(associatedCert.pdfUrl, `Certificate_${result.examId?.title.replace(/\s+/g, '_') || 'Exam'}.pdf`)}
+                                    className="text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 flex-grow-1"
+                                    style={{ fontSize: '0.75rem', backgroundColor: '#7c5cff', border: 'none', borderRadius: '6px' }}
+                                  >
+                                    <Download size={12} /> Download
+                                  </Button>
+                                </div>
+                              </div>
+                            )
+                          ) : null}
+                          <Button 
+                            size="sm"
+                            variant="outline-secondary"
+                            onClick={() => { setSelectedReportData(result); setShowReportModal(true); }}
+                            className="w-100 py-1 px-2 d-flex align-items-center justify-content-center gap-1 fw-semibold"
+                            style={{ fontSize: '0.78rem', borderRadius: '6px' }}
+                          >
+                            <FileText size={14} /> View Score Report
+                          </Button>
+                        </div>
                       </Card.Body>
                     </Card>
                   </Col>
@@ -559,6 +587,206 @@ const StudentDashboard = () => {
               className="w-100" 
               style={{ maxHeight: '500px' }}
             />
+          )}
+        </Modal.Body>
+      </Modal>
+
+      {/* Dynamic Certificate Modal */}
+      <Modal show={showCertModal} onHide={() => setShowCertModal(false)} size="lg" centered>
+        <Modal.Header closeButton className="bg-dark text-white border-0">
+          <Modal.Title className="fw-bold d-flex align-items-center gap-2">
+            <Award className="text-warning" size={22} /> Official Certificate of Completion
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4 bg-light">
+          {selectedCertData && (
+            <div>
+              <div id="printable-cert-content" className="p-4 bg-white rounded-4 border shadow-sm" style={{ border: '8px double #d97706', textAlign: 'center' }}>
+                <div style={{ padding: '20px' }}>
+                  <div className="fw-bold text-uppercase" style={{ fontSize: '1.2rem', color: '#b45309', letterSpacing: '2px' }}>
+                    Centre for Development of Advanced Computing (CDAC)
+                  </div>
+                  <div className="text-muted small mb-4">Official Online Examination Portal</div>
+                  
+                  <h2 className="fw-bold my-3" style={{ fontSize: '2.5rem', color: '#78350f', fontFamily: 'Georgia, serif' }}>
+                    CERTIFICATE OF COMPLETION
+                  </h2>
+                  <p className="text-muted mb-4" style={{ fontSize: '1.1rem' }}>This is to certify that</p>
+                  
+                  <h3 className="fw-bold text-primary mb-4" style={{ fontSize: '2.2rem', textDecoration: 'underline' }}>
+                    {user.name || 'Candidate Name'}
+                  </h3>
+                  
+                  <p className="mb-4 text-dark mx-auto" style={{ maxWidth: '600px', fontSize: '1.15rem', lineHeight: '1.6' }}>
+                    has successfully completed the proctored online assessment for 
+                    <strong className="d-block mt-1 text-dark" style={{ fontSize: '1.4rem' }}>{selectedCertData.examId?.title || 'Examination'}</strong>
+                    with an achievement score of <strong>{selectedCertData.score} / {selectedCertData.totalQuestions}</strong> 
+                    ({Math.round((selectedCertData.score / (selectedCertData.totalQuestions || 1)) * 100)}% accuracy).
+                  </p>
+                  
+                  <div className="d-flex justify-content-between align-items-end mt-5 pt-4 border-top px-3 flex-wrap gap-3">
+                    <div className="text-start">
+                      <div className="small text-muted">Issue Date:</div>
+                      <div className="fw-bold text-dark">{new Date(selectedCertData.submittedAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                      <div className="small text-muted mt-1">Verification ID: CDAC-{selectedCertData._id ? selectedCertData._id.substring(0, 8).toUpperCase() : 'EXAM-01'}</div>
+                    </div>
+                    <div className="p-3 rounded-circle border border-warning border-2 bg-warning-subtle text-warning-emphasis fw-bold small d-flex align-items-center justify-content-center" style={{ width: 80, height: 80, fontSize: '0.7rem' }}>
+                      CDAC VERIFIED
+                    </div>
+                    <div className="text-end">
+                      <div className="fw-bold font-monospace" style={{ fontSize: '1.1rem', fontStyle: 'italic' }}>Dr. Exam Director</div>
+                      <div className="border-top border-dark pt-1 small text-muted">Authorized Signatory</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end gap-2 mt-4">
+                <Button variant="outline-secondary" onClick={() => setShowCertModal(false)}>Close</Button>
+                <Button 
+                  variant="warning" 
+                  onClick={() => {
+                    const printContent = document.getElementById('printable-cert-content').innerHTML;
+                    const printWindow = window.open('', '_blank', 'width=1000,height=800');
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>CDAC Certificate - ${user.name}</title>
+                          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+                          <style>
+                            body { font-family: 'Georgia', serif; background: #fff; padding: 40px; text-align: center; color: #1e293b; }
+                            .cert-border { border: 12px double #b45309; padding: 50px; background: #fffbeb; border-radius: 16px; }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="cert-border">${printContent}</div>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(() => printWindow.print(), 500);
+                  }}
+                  className="fw-bold text-dark d-flex align-items-center gap-2"
+                >
+                  <Download size={16} /> Print / Save as PDF
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
+
+      {/* Score Report Modal */}
+      <Modal show={showReportModal} onHide={() => setShowReportModal(false)} size="lg" centered>
+        <Modal.Header closeButton className="bg-dark text-white border-0">
+          <Modal.Title className="fw-bold d-flex align-items-center gap-2">
+            <FileText className="text-info" size={22} /> Official Score Report & Transcript
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4 bg-light">
+          {selectedReportData && (
+            <div>
+              <div id="printable-report-content" className="p-4 bg-white rounded-4 border shadow-sm">
+                <div className="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4 flex-wrap gap-2">
+                  <div>
+                    <h4 className="fw-bold text-dark mb-1">CDAC Examination Transcript</h4>
+                    <div className="text-muted small">Candidate Performance Report</div>
+                  </div>
+                  <Badge bg="primary" className="px-3 py-2 fs-6">
+                    {selectedReportData.isPractice ? 'Practice Assessment' : 'Proctored Exam'}
+                  </Badge>
+                </div>
+
+                <Row className="g-3 mb-4">
+                  <Col md={6}>
+                    <div className="p-3 bg-light rounded-3">
+                      <div className="small text-muted">Candidate Name</div>
+                      <div className="fw-bold fs-5 text-dark">{user.name}</div>
+                    </div>
+                  </Col>
+                  <Col md={6}>
+                    <div className="p-3 bg-light rounded-3">
+                      <div className="small text-muted">Exam Title</div>
+                      <div className="fw-bold fs-5 text-dark">{selectedReportData.examId?.title || 'Assessment'}</div>
+                    </div>
+                  </Col>
+                </Row>
+
+                <Row className="g-3 mb-4 text-center">
+                  <Col md={3} xs={6}>
+                    <div className="p-3 border rounded-3 bg-white shadow-xs">
+                      <div className="small text-muted text-uppercase fw-semibold">Score Obtained</div>
+                      <div className="fs-3 fw-bold text-primary my-1">{selectedReportData.score}</div>
+                      <div className="small text-muted">out of {selectedReportData.totalQuestions}</div>
+                    </div>
+                  </Col>
+                  <Col md={3} xs={6}>
+                    <div className="p-3 border rounded-3 bg-white shadow-xs">
+                      <div className="small text-muted text-uppercase fw-semibold">Accuracy</div>
+                      <div className="fs-3 fw-bold text-success my-1">
+                        {Math.round((selectedReportData.score / (selectedReportData.totalQuestions || 1)) * 100)}%
+                      </div>
+                      <div className="small text-muted">overall accuracy</div>
+                    </div>
+                  </Col>
+                  <Col md={3} xs={6}>
+                    <div className="p-3 border rounded-3 bg-white shadow-xs">
+                      <div className="small text-muted text-uppercase fw-semibold">Status</div>
+                      <div className="fs-4 fw-bold my-2">
+                        {((selectedReportData.passed !== undefined ? selectedReportData.passed : (selectedReportData.score / (selectedReportData.totalQuestions || 1)) >= 0.4)) ? (
+                          <span className="text-success">PASSED ✔</span>
+                        ) : (
+                          <span className="text-danger">NEEDS WORK ❌</span>
+                        )}
+                      </div>
+                    </div>
+                  </Col>
+                  <Col md={3} xs={6}>
+                    <div className="p-3 border rounded-3 bg-white shadow-xs">
+                      <div className="small text-muted text-uppercase fw-semibold">Date</div>
+                      <div className="fs-6 fw-bold text-dark my-2">
+                        {new Date(selectedReportData.submittedAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                      <div className="small text-muted">Completed</div>
+                    </div>
+                  </Col>
+                </Row>
+
+                <div className="border-top pt-3 text-muted small d-flex justify-content-between">
+                  <span>Generated by CDAC ExamWeb System</span>
+                  <span>Report Hash: {selectedReportData._id ? selectedReportData._id : 'LOCAL-REP'}</span>
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end gap-2 mt-4">
+                <Button variant="outline-secondary" onClick={() => setShowReportModal(false)}>Close</Button>
+                <Button 
+                  variant="primary" 
+                  onClick={() => {
+                    const printContent = document.getElementById('printable-report-content').innerHTML;
+                    const printWindow = window.open('', '_blank', 'width=900,height=800');
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Score Report - ${user.name}</title>
+                          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+                          <style>body { font-family: 'Arial', sans-serif; padding: 40px; }</style>
+                        </head>
+                        <body>${printContent}</body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(() => printWindow.print(), 500);
+                  }}
+                  className="fw-bold text-white d-flex align-items-center gap-2"
+                  style={{ backgroundColor: '#7c5cff', border: 'none' }}
+                >
+                  <Download size={16} /> Print / Save Report PDF
+                </Button>
+              </div>
+            </div>
           )}
         </Modal.Body>
       </Modal>

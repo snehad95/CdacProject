@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Badge, Spinner, Alert, Modal, Form } from 'react-bootstrap';
-import { Award, Download, CheckCircle, Upload, Eye, Trash2 } from 'lucide-react';
+import { Card, Table, Button, Badge, Spinner, Modal, Form } from 'react-bootstrap';
+import { Award, Download, Upload, Eye, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -31,7 +31,7 @@ const ManageCertificates = () => {
       
       for (const exam of examsRes.data) {
         const res = await axios.get(`http://localhost:5000/api/results/exam/${exam._id}`);
-        allResults.push(...res.data.filter(r => r.passed));
+        allResults.push(...res.data);
       }
       
       setResults(allResults);
@@ -51,6 +51,24 @@ const ManageCertificates = () => {
     setSelectedResult(result);
     setPdfFile(null);
     setShowUpload(true);
+  };
+
+  const handleIssueDynamic = async (result) => {
+    const token = localStorage.getItem('token');
+    const rUserId = result.userId?._id || result.userId;
+    const rExamId = result.examId?._id || result.examId;
+    try {
+      await axios.post('http://localhost:5000/api/certificates/dynamic', {
+        studentId: rUserId,
+        examId: rExamId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Dynamic Certificate issued successfully!');
+      fetchPassedStudentsAndCertificates();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to issue certificate');
+    }
   };
 
   const handleUploadSubmit = async (e) => {
@@ -123,20 +141,13 @@ const ManageCertificates = () => {
         <h4 className="fw-bold mb-0">Certificate Issuance &amp; PDF Upload</h4>
       </div>
 
-      <Alert variant="info" className="border-0 shadow-sm rounded-4 mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <CheckCircle size={20} />
-          <div>Only students who have <strong>PASSED</strong> their exams are eligible. Upload their certificate PDFs and click **Publish** to make them available in their dashboards.</div>
-        </div>
-      </Alert>
-
       <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
         <Table hover responsive className="mb-0">
           <thead className="bg-light">
             <tr>
               <th className="px-4 py-3 border-0">Student Name</th>
               <th className="px-4 py-3 border-0">Exam Title</th>
-              <th className="px-4 py-3 border-0">Score</th>
+              <th className="px-4 py-3 border-0">Score & Status</th>
               <th className="px-4 py-3 border-0">Publish Status</th>
               <th className="px-4 py-3 border-0 text-end">Action</th>
             </tr>
@@ -160,9 +171,16 @@ const ManageCertificates = () => {
                     <div className="fw-semibold text-primary">{r.examId?.title || 'General Exam'}</div>
                   </td>
                   <td className="px-4 py-3 border-0">
-                    <Badge bg="success-subtle" className="text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                      {r.score} Marks
-                    </Badge>
+                    <div className="d-flex align-items-center gap-2">
+                      <Badge bg="primary" className="px-2 py-1 rounded-pill fw-bold">
+                        {r.score} Marks
+                      </Badge>
+                      {((r.passed !== undefined ? r.passed : (r.score / (r.totalQuestions || 1)) >= 0.4)) ? (
+                        <Badge bg="success" className="px-2 py-1 rounded-pill">Passed</Badge>
+                      ) : (
+                        <Badge bg="danger" className="px-2 py-1 rounded-pill">Failed</Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 border-0">
                     {cert ? (
@@ -172,30 +190,44 @@ const ManageCertificates = () => {
                         <Badge bg="warning" text="dark" className="px-3 py-2 rounded-pill fw-bold">Draft (Unpublished)</Badge>
                       )
                     ) : (
-                      <Badge bg="secondary" className="px-3 py-2 rounded-pill fw-bold">Not Uploaded</Badge>
+                      <Badge bg="secondary" className="px-3 py-2 rounded-pill fw-bold">Not Uploaded / Issued</Badge>
                     )}
                   </td>
                   <td className="px-4 py-3 border-0 text-end">
                     <div className="d-flex gap-2 justify-content-end align-items-center">
                       {!cert ? (
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm" 
-                          className="rounded-pill px-3 d-flex align-items-center gap-2"
-                          onClick={() => openUploadModal(r)}
-                        >
-                          <Upload size={14} /> Upload PDF
-                        </Button>
+                        <>
+                          <Button 
+                            variant="warning" 
+                            size="sm" 
+                            className="rounded-pill px-3 d-flex align-items-center gap-1 fw-bold text-dark"
+                            onClick={() => handleIssueDynamic(r)}
+                          >
+                            <Award size={14} /> Issue Dynamic Cert
+                          </Button>
+                          <Button 
+                            variant="outline-primary" 
+                            size="sm" 
+                            className="rounded-pill px-3 d-flex align-items-center gap-1"
+                            onClick={() => openUploadModal(r)}
+                          >
+                            <Upload size={14} /> Upload PDF
+                          </Button>
+                        </>
                       ) : (
                         <>
-                          <a 
-                            href={cert.pdfUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="btn btn-outline-info btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1"
-                          >
-                            <Eye size={14} /> View
-                          </a>
+                          {cert.pdfUrl === 'DYNAMIC_CERTIFICATE' ? (
+                            <Badge bg="info" className="px-3 py-2 rounded-pill fw-bold text-dark">Dynamic Cert Issued</Badge>
+                          ) : (
+                            <a 
+                              href={cert.pdfUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="btn btn-outline-info btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1"
+                            >
+                              <Eye size={14} /> View PDF
+                            </a>
+                          )}
                           
                           {!cert.isPublished && (
                             <Button 
@@ -213,6 +245,7 @@ const ManageCertificates = () => {
                             size="sm" 
                             className="rounded-circle p-1 d-flex align-items-center justify-content-center"
                             style={{ width: '28px', height: '28px' }}
+                            title="Revoke / Delete Certificate"
                             onClick={() => handleDelete(cert._id)}
                           >
                             <Trash2 size={14} />
@@ -226,7 +259,7 @@ const ManageCertificates = () => {
             })}
             {results.length === 0 && (
               <tr>
-                <td colSpan="5" className="text-center py-5 text-muted">No eligible students found for certificate issuance.</td>
+                <td colSpan="5" className="text-center py-5 text-muted">No students found.</td>
               </tr>
             )}
           </tbody>

@@ -233,14 +233,37 @@ const PracticeArena = () => {
               <span style={styles.qBadge}>Question {currentIdx + 1}</span>
               <span style={styles.qMetaSep}>of {questions.length}</span>
             </div>
-            <p style={styles.qText}>{questions[currentIdx].text}</p>
+            <p style={styles.qText}>{questions[currentIdx].title ? `${questions[currentIdx].title}: ` : ''}{questions[currentIdx].text}</p>
+            {questions[currentIdx].type === 'coding' && (
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                {questions[currentIdx].description && (
+                  <div style={{ marginBottom: '12px', fontSize: '14px', color: '#334155', whiteSpace: 'pre-wrap' }}>{questions[currentIdx].description}</div>
+                )}
+                {questions[currentIdx].constraints && (
+                  <div style={{ marginBottom: '8px', fontSize: '13px' }}><strong>Constraints: </strong><code>{questions[currentIdx].constraints}</code></div>
+                )}
+                {questions[currentIdx].sampleInput && (
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '13px', marginTop: '8px' }}>
+                    <div style={{ flex: 1, background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <strong>Sample Input:</strong><pre style={{ margin: '4px 0 0', fontSize: '12px' }}>{questions[currentIdx].sampleInput}</pre>
+                    </div>
+                    <div style={{ flex: 1, background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <strong>Sample Output:</strong><pre style={{ margin: '4px 0 0', fontSize: '12px' }}>{questions[currentIdx].sampleOutput}</pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {questions[currentIdx].type === 'subjective' ? (
+          {(questions[currentIdx].type === 'subjective' || questions[currentIdx].type === 'coding') ? (
             <div style={{ marginBottom: 32 }}>
+              {questions[currentIdx].type === 'coding' && (
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '6px' }}>WRITE YOUR PROGRAM BELOW:</div>
+              )}
               <textarea
-                rows={6}
-                placeholder="Type your subjective response or code here..."
+                rows={10}
+                placeholder={questions[currentIdx].type === 'coding' ? "// Write your code here..." : "Type your subjective response here..."}
                 value={answers[currentIdx] || ''}
                 onChange={e => {
                   setAnswers({ ...answers, [currentIdx]: e.target.value });
@@ -252,8 +275,8 @@ const PracticeArena = () => {
                   padding: '16px 18px',
                   fontFamily: 'Consolas, Monaco, monospace',
                   fontSize: 14,
-                  background: '#fff',
-                  color: 'var(--cdac-text)',
+                  background: '#1e1e1e',
+                  color: '#d4d4d4',
                   outline: 'none',
                   resize: 'vertical'
                 }}

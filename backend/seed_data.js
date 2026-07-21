@@ -3,6 +3,7 @@ import PracticeTest from './models/PracticeTest.js';
 import Exam from './models/Exam.js';
 import Question from './models/Question.js';
 import dotenv from 'dotenv';
+import { generate100Questions } from './utils/questionGenerator.js';
 
 dotenv.config();
 
@@ -673,23 +674,40 @@ export const seedData = async (shouldExit = true) => {
     await Question.deleteMany({ practiceTestId: { $exists: true } });
     console.log('🗑️ Cleared existing practice test questions.');
 
-    for (const testTemplate of practiceTestTemplates) {
+    const allCategories = [
+      { title: 'Programming', desc: 'Test coding knowledge in different programming languages.', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Quantitative Aptitude', desc: 'Improve mathematical and logical problem solving skills.', img: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Logical Reasoning', desc: 'Develop analytical and thinking ability.', img: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&q=80&w=500' },
+      { title: 'English', desc: 'Practice grammar, vocabulary and comprehension.', img: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=500' },
+      { title: 'General Knowledge', desc: 'Stay updated with current affairs and general awareness.', img: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Technical Subjects', desc: 'Prepare technical concepts for placements and exams.', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Data Structures', desc: 'Master arrays, trees, graphs, and algorithm complexity.', img: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Database Management', desc: 'SQL, NoSQL, normalization, and query optimization.', img: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Operating Systems', desc: 'Processes, memory management, scheduling and more.', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Computer Networks', desc: 'TCP/IP, OSI model, routing and network security concepts.', img: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Software Engineering', desc: 'SDLC, design patterns, testing, and agile methodologies.', img: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Cybersecurity', desc: 'Encryption, ethical hacking, firewalls and threat analysis.', img: 'https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Artificial Intelligence', desc: 'AI fundamentals, search algorithms, and knowledge representation.', img: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Machine Learning', desc: 'Supervised, unsupervised learning and model evaluation.', img: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Web Development', desc: 'HTML, CSS, JavaScript, REST APIs and frontend frameworks.', img: 'https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Cloud Computing', desc: 'AWS, Azure, GCP — deployment, storage and cloud architecture.', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=500' },
+      { title: 'Mobile Development', desc: 'Android, iOS fundamentals and cross-platform app building.', img: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=500' },
+      { title: 'DevOps & CI/CD', desc: 'Docker, Kubernetes, pipelines and continuous integration.', img: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?auto=format&fit=crop&q=80&w=500' }
+    ];
+
+    for (const cat of allCategories) {
       const test = new PracticeTest({
-        title: testTemplate.title,
-        description: testTemplate.description,
-        image: testTemplate.image,
+        title: cat.title,
+        description: cat.desc,
+        image: cat.img,
         createdBy: adminId
       });
       const savedTest = await test.save();
 
-      const questionsToInsert = testTemplate.questions.map(q => ({
-        practiceTestId: savedTest._id,
-        text: q.text,
-        options: q.options
-      }));
+      const questionsToInsert = generate100Questions(savedTest.title, savedTest._id, adminId);
       await Question.insertMany(questionsToInsert);
     }
-    console.log(`✅ Seeded ${practiceTestTemplates.length} Practice Tests and their questions.`);
+    console.log(`✅ Seeded ${allCategories.length} Practice Tests with 100 questions each (Total: ${allCategories.length * 100} questions).`);
 
     // 2. Seed Exams
     const exams = [

@@ -17,6 +17,7 @@ const AppNavbar = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
+  const [expanded, setExpanded] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -54,8 +55,8 @@ const AppNavbar = () => {
 
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = '/';
   };
 
@@ -99,10 +100,10 @@ const AppNavbar = () => {
 
   return (
     <>
-      <Navbar expand="lg" className="py-2 px-lg-4"
+      <Navbar expand="lg" expanded={expanded} onToggle={(val) => setExpanded(val)} className="py-2 px-lg-4"
         style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, boxShadow: '0 2px 12px rgba(124,92,255,0.06)' }}>
         <Container fluid>
-          <Navbar.Brand as={Link} to="/">
+          <Navbar.Brand as={Link} to="/" onClick={() => setExpanded(false)}>
             <img src="http://recruitment-portal.in/reccdac/images/logo_cdac.png" alt="CDAC Logo"
               style={{ width: 'auto', maxWidth: '100%', height: 46, objectFit: 'contain' }} />
           </Navbar.Brand>
@@ -125,6 +126,7 @@ const AppNavbar = () => {
                     to={isAnchor ? undefined : item.to}
                     href={isAnchor ? item.to : undefined}
                     onClick={(e) => {
+                      setExpanded(false);
                       if (isAnchor) {
                         handleNavClick(e, item.to);
                       }
@@ -142,20 +144,20 @@ const AppNavbar = () => {
                 );
               })}
               {user?.role === 'admin' && (
-                <Nav.Link as={Link} to="/admin" className="fw-bold" style={{ color: '#e11d48' }}>Admin Panel</Nav.Link>
+                <Nav.Link as={Link} to="/admin" onClick={() => setExpanded(false)} className="fw-bold" style={{ color: '#e11d48' }}>Admin Panel</Nav.Link>
               )}
               {user?.role === 'teacher' && (
-                <Nav.Link as={Link} to="/teacher" className="fw-bold" style={{ color: '#d97706' }}>Teacher Panel</Nav.Link>
+                <Nav.Link as={Link} to="/teacher" onClick={() => setExpanded(false)} className="fw-bold" style={{ color: '#d97706' }}>Teacher Panel</Nav.Link>
               )}
               {user?.role === 'student' && (
-                <Nav.Link as={Link} to="/dashboard" className="fw-bold" style={{ color: '#16a34a' }}>My Dashboard</Nav.Link>
+                <Nav.Link as={Link} to="/dashboard" onClick={() => setExpanded(false)} className="fw-bold" style={{ color: '#16a34a' }}>My Dashboard</Nav.Link>
               )}
             </Nav>
             <div className="d-flex gap-2 align-items-center">
               {token && (
                 <>
                   <div 
-                    onClick={() => setShowProfile(true)}
+                    onClick={() => { setExpanded(false); setShowProfile(true); }}
                     className="d-flex align-items-center me-3"
                     style={{ background: '#f5f1ff', border: `1px solid ${T.border}`, borderRadius: 999, padding: '4px 12px 4px 4px', cursor: 'pointer' }}
                     title="Edit Profile"
@@ -172,7 +174,7 @@ const AppNavbar = () => {
                     </span>
                   </div>
 
-                  <Button onClick={handleLogout} className="fw-bold px-3 py-2 d-flex align-items-center gap-2 border-0 shadow-sm"
+                  <Button onClick={() => { setExpanded(false); handleLogout(); }} className="fw-bold px-3 py-2 d-flex align-items-center gap-2 border-0 shadow-sm"
                     style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#ffffff', borderRadius: 10, fontSize: '0.88rem' }}>
                     <LogOut size={16} /> Logout
                   </Button>

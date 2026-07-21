@@ -46,7 +46,18 @@ const ManageExams = () => {
   const [showQuestionsModal, setShowQuestionsModal] = useState(false);
   const [selectedExamForQuestions, setSelectedExamForQuestions] = useState(null);
   const [examQuestions, setExamQuestions] = useState([]);
+  const [newQuestionType, setNewQuestionType] = useState('mcq');
   const [newQuestionText, setNewQuestionText] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newConstraints, setNewConstraints] = useState('');
+  const [newSampleInput, setNewSampleInput] = useState('');
+  const [newSampleOutput, setNewSampleOutput] = useState('');
+  const [newAllowedLanguages, setNewAllowedLanguages] = useState(['java', 'python', 'cpp']);
+  const [newTestCases, setNewTestCases] = useState([{ input: '', output: '', isPublic: false }]);
+  const [newWorkspaceLines, setNewWorkspaceLines] = useState(10);
+  const [newWordLimit, setNewWordLimit] = useState(500);
+  const [newMarks, setNewMarks] = useState(1);
   const [newOptions, setNewOptions] = useState([
     { text: '', isCorrect: false },
     { text: '', isCorrect: false },
@@ -57,25 +68,54 @@ const ManageExams = () => {
 
   // Questions composed during creation
   const [preparedQuestions, setPreparedQuestions] = useState([]);
+  const [composedType, setComposedType] = useState('mcq');
   const [composedText, setComposedText] = useState('');
+  const [composedTitle, setComposedTitle] = useState('');
+  const [composedDescription, setComposedDescription] = useState('');
+  const [composedConstraints, setComposedConstraints] = useState('');
+  const [composedSampleInput, setComposedSampleInput] = useState('');
+  const [composedSampleOutput, setComposedSampleOutput] = useState('');
+  const [composedAllowedLanguages, setComposedAllowedLanguages] = useState(['java', 'python', 'cpp']);
+  const [composedTestCases, setComposedTestCases] = useState([{ input: '', output: '', isPublic: false }]);
+  const [composedWorkspaceLines, setComposedWorkspaceLines] = useState(10);
+  const [composedWordLimit, setComposedWordLimit] = useState(500);
+  const [composedMarks, setComposedMarks] = useState(1);
   const [composedOptions, setComposedOptions] = useState(['', '', '', '']);
   const [composedCorrectIndex, setComposedCorrectIndex] = useState(0);
 
   const handleAddPreparedQuestion = (e) => {
     e.preventDefault();
-    if (!composedText.trim()) return toast.error("Please enter question text!");
-    if (composedOptions.some(o => !o.trim())) return toast.error("Please fill all options!");
+    if (composedType !== 'coding' && !composedText.trim()) return toast.error("Please enter question text!");
+    if (composedType === 'coding' && !composedTitle.trim()) return toast.error("Please enter problem title!");
+    if (composedType === 'mcq' && composedOptions.some(o => !o.trim())) return toast.error("Please fill all options!");
     
     const newQ = {
-      text: composedText,
-      options: composedOptions.map((opt, idx) => ({
+      type: composedType,
+      text: composedType === 'coding' ? composedDescription || composedTitle : composedText,
+      title: composedTitle,
+      description: composedDescription,
+      constraints: composedConstraints,
+      sampleInput: composedSampleInput,
+      sampleOutput: composedSampleOutput,
+      allowedLanguages: composedAllowedLanguages,
+      testCases: composedType === 'coding' ? composedTestCases : [],
+      workspaceLines: composedWorkspaceLines,
+      wordLimit: composedWordLimit,
+      marks: composedMarks,
+      options: composedType === 'mcq' ? composedOptions.map((opt, idx) => ({
         text: opt,
         isCorrect: idx === composedCorrectIndex
-      }))
+      })) : []
     };
     
     setPreparedQuestions([...preparedQuestions, newQ]);
     setComposedText('');
+    setComposedTitle('');
+    setComposedDescription('');
+    setComposedConstraints('');
+    setComposedSampleInput('');
+    setComposedSampleOutput('');
+    setComposedTestCases([{ input: '', output: '', isPublic: false }]);
     setComposedOptions(['', '', '', '']);
     setComposedCorrectIndex(0);
     toast.success("Question added to list!");
@@ -105,21 +145,39 @@ const ManageExams = () => {
 
   const handleAddQuestionManual = async (e) => {
     e.preventDefault();
-    if (!newQuestionText.trim()) return toast.error("Please enter question text!");
-    if (!newOptions.some(o => o.isCorrect)) return toast.error("Please mark at least one correct option!");
-    if (newOptions.some(o => !o.text.trim())) return toast.error("Please enter text for all options!");
+    if (newQuestionType !== 'coding' && !newQuestionText.trim()) return toast.error("Please enter question text!");
+    if (newQuestionType === 'coding' && !newTitle.trim()) return toast.error("Please enter problem title!");
+    if (newQuestionType === 'mcq' && !newOptions.some(o => o.isCorrect)) return toast.error("Please mark at least one correct option!");
+    if (newQuestionType === 'mcq' && newOptions.some(o => !o.text.trim())) return toast.error("Please enter text for all options!");
 
     const token = localStorage.getItem('token');
     try {
       await axios.post('http://localhost:5000/api/questions', {
         examId: selectedExamForQuestions._id,
-        text: newQuestionText,
-        options: newOptions
+        type: newQuestionType,
+        text: newQuestionType === 'coding' ? newDescription || newTitle : newQuestionText,
+        options: newQuestionType === 'mcq' ? newOptions : [],
+        marks: newMarks,
+        workspaceLines: newWorkspaceLines,
+        title: newTitle,
+        description: newDescription,
+        wordLimit: newWordLimit,
+        constraints: newConstraints,
+        sampleInput: newSampleInput,
+        sampleOutput: newSampleOutput,
+        allowedLanguages: newAllowedLanguages,
+        testCases: newQuestionType === 'coding' ? newTestCases : []
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Question added successfully!");
       setNewQuestionText('');
+      setNewTitle('');
+      setNewDescription('');
+      setNewConstraints('');
+      setNewSampleInput('');
+      setNewSampleOutput('');
+      setNewTestCases([{ input: '', output: '', isPublic: false }]);
       setNewOptions([
         { text: '', isCorrect: false },
         { text: '', isCorrect: false },
@@ -599,37 +657,109 @@ const ManageExams = () => {
                   
                   <div className="p-3 bg-white rounded-3 border mb-3">
                     <h6 className="fw-bold text-dark mb-3">Add Question to Exam</h6>
-                    <Form.Group className="mb-3">
-                      <Form.Label className="small fw-semibold text-muted">Question Text</Form.Label>
-                      <Form.Control 
-                        as="textarea" rows={2} placeholder="e.g. Which keyword is used to define a class in Javascript?"
-                        value={composedText} onChange={e => setComposedText(e.target.value)}
-                        className="rounded-3 shadow-none border-light bg-light"
-                      />
-                    </Form.Group>
-                    
-                    <Row className="g-3">
-                      {composedOptions.map((optText, oIdx) => (
-                        <Col md={6} key={oIdx} className="mb-2">
-                          <div className="d-flex align-items-center gap-2">
-                            <Form.Check 
-                              type="radio" name="composedCorrectOpt"
-                              checked={composedCorrectIndex === oIdx}
-                              onChange={() => setComposedCorrectIndex(oIdx)}
-                            />
-                            <Form.Control 
-                              placeholder={`Option ${String.fromCharCode(65 + oIdx)}`}
-                              value={optText}
-                              onChange={e => {
-                                const val = e.target.value;
-                                setComposedOptions(prev => prev.map((valStr, idx) => idx === oIdx ? val : valStr));
-                              }}
-                              className="rounded-3 shadow-none border-light"
-                            />
-                          </div>
-                        </Col>
-                      ))}
+                    <Row className="mb-3">
+                      <Col md={6}>
+                        <Form.Label className="small fw-semibold text-muted">Question Type</Form.Label>
+                        <Form.Select value={composedType} onChange={e => setComposedType(e.target.value)} className="rounded-3">
+                          <option value="mcq">Multiple Choice Question (MCQ)</option>
+                          <option value="subjective">Subjective Question</option>
+                          <option value="coding">Coding Question</option>
+                        </Form.Select>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label className="small fw-semibold text-muted">Marks</Form.Label>
+                        <Form.Control type="number" min="1" value={composedMarks} onChange={e => setComposedMarks(parseInt(e.target.value) || 1)} className="rounded-3" />
+                      </Col>
                     </Row>
+
+                    {composedType === 'coding' ? (
+                      <>
+                        <Row className="mb-3">
+                          <Col md={6}>
+                            <Form.Label className="small fw-semibold text-muted">Problem Title</Form.Label>
+                            <Form.Control placeholder="e.g. Reverse a String" value={composedTitle} onChange={e => setComposedTitle(e.target.value)} className="rounded-3" />
+                          </Col>
+                          <Col md={6}>
+                            <Form.Label className="small fw-semibold text-muted">Allowed Languages</Form.Label>
+                            <div className="d-flex gap-3 align-items-center mt-2">
+                              {['python', 'java', 'cpp'].map(lang => (
+                                <Form.Check key={lang} type="checkbox" label={lang.toUpperCase()} checked={composedAllowedLanguages.includes(lang)} onChange={() => {
+                                  setComposedAllowedLanguages(prev => prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]);
+                                }} />
+                              ))}
+                            </div>
+                          </Col>
+                        </Row>
+                        <Form.Group className="mb-3">
+                          <Form.Label className="small fw-semibold text-muted">Problem Description</Form.Label>
+                          <Form.Control as="textarea" rows={3} placeholder="Write coding problem description here..." value={composedDescription} onChange={e => setComposedDescription(e.target.value)} className="rounded-3" />
+                        </Form.Group>
+                        <Row className="mb-3">
+                          <Col md={4}>
+                            <Form.Label className="small fw-semibold text-muted">Constraints</Form.Label>
+                            <Form.Control as="textarea" rows={2} placeholder="e.g. 1 <= N <= 10^5" value={composedConstraints} onChange={e => setComposedConstraints(e.target.value)} className="rounded-3" />
+                          </Col>
+                          <Col md={4}>
+                            <Form.Label className="small fw-semibold text-muted">Sample Input</Form.Label>
+                            <Form.Control as="textarea" rows={2} placeholder="Sample input" value={composedSampleInput} onChange={e => setComposedSampleInput(e.target.value)} className="rounded-3" />
+                          </Col>
+                          <Col md={4}>
+                            <Form.Label className="small fw-semibold text-muted">Sample Output</Form.Label>
+                            <Form.Control as="textarea" rows={2} placeholder="Sample output" value={composedSampleOutput} onChange={e => setComposedSampleOutput(e.target.value)} className="rounded-3" />
+                          </Col>
+                        </Row>
+                        <div className="mb-3">
+                          <Form.Label className="small fw-bold text-primary">Test Cases</Form.Label>
+                          {composedTestCases.map((tc, idx) => (
+                            <Row key={idx} className="g-2 mb-2">
+                              <Col md={5}><Form.Control placeholder="Input" value={tc.input} onChange={e => {
+                                setComposedTestCases(prev => prev.map((item, i) => i === idx ? { ...item, input: e.target.value } : item));
+                              }} /></Col>
+                              <Col md={5}><Form.Control placeholder="Expected Output" value={tc.output} onChange={e => {
+                                setComposedTestCases(prev => prev.map((item, i) => i === idx ? { ...item, output: e.target.value } : item));
+                              }} /></Col>
+                              <Col md={2}><Button variant="outline-danger" size="sm" onClick={() => setComposedTestCases(prev => prev.filter((_, i) => i !== idx))}>Remove</Button></Col>
+                            </Row>
+                          ))}
+                          <Button variant="outline-secondary" size="sm" onClick={() => setComposedTestCases([...composedTestCases, { input: '', output: '', isPublic: false }])}>+ Add Test Case</Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Form.Group className="mb-3">
+                          <Form.Label className="small fw-semibold text-muted">Question Text</Form.Label>
+                          <Form.Control 
+                            as="textarea" rows={2} placeholder="e.g. Which keyword is used to define a class in Javascript?"
+                            value={composedText} onChange={e => setComposedText(e.target.value)}
+                            className="rounded-3 shadow-none border-light bg-light"
+                          />
+                        </Form.Group>
+                        {composedType === 'mcq' && (
+                          <Row className="g-3">
+                            {composedOptions.map((optText, oIdx) => (
+                              <Col md={6} key={oIdx} className="mb-2">
+                                <div className="d-flex align-items-center gap-2">
+                                  <Form.Check 
+                                    type="radio" name="composedCorrectOpt"
+                                    checked={composedCorrectIndex === oIdx}
+                                    onChange={() => setComposedCorrectIndex(oIdx)}
+                                  />
+                                  <Form.Control 
+                                    placeholder={`Option ${String.fromCharCode(65 + oIdx)}`}
+                                    value={optText}
+                                    onChange={e => {
+                                      const val = e.target.value;
+                                      setComposedOptions(prev => prev.map((valStr, idx) => idx === oIdx ? val : valStr));
+                                    }}
+                                    className="rounded-3 shadow-none border-light"
+                                  />
+                                </div>
+                              </Col>
+                            ))}
+                          </Row>
+                        )}
+                      </>
+                    )}
                     
                     <Button 
                       variant="outline-primary" 
@@ -646,14 +776,17 @@ const ManageExams = () => {
                       {preparedQuestions.map((q, idx) => (
                         <div key={idx} className="p-3 bg-white rounded-3 border mb-2 d-flex justify-content-between align-items-start">
                           <div>
-                            <div className="fw-bold small text-dark mb-1">Q{idx + 1}. {q.text}</div>
-                            <div className="small text-muted">
-                              Options: {q.options.map((o, oIdx) => (
-                                <span key={oIdx} className="me-2" style={{ color: o.isCorrect ? '#22c55e' : 'inherit', fontWeight: o.isCorrect ? 600 : 'normal' }}>
-                                  ({String.fromCharCode(65 + oIdx)}) {o.text}
-                                </span>
-                              ))}
-                            </div>
+                            <span className="badge bg-primary me-2 text-uppercase">{q.type}</span>
+                            <span className="fw-bold small text-dark mb-1">Q{idx + 1}. {q.title || q.text}</span>
+                            {q.type === 'mcq' && (
+                              <div className="small text-muted mt-1">
+                                Options: {q.options.map((o, oIdx) => (
+                                  <span key={oIdx} className="me-2" style={{ color: o.isCorrect ? '#22c55e' : 'inherit', fontWeight: o.isCorrect ? 600 : 'normal' }}>
+                                    ({String.fromCharCode(65 + oIdx)}) {o.text}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <Button 
                             variant="link" className="p-0 text-danger"
@@ -865,39 +998,114 @@ const ManageExams = () => {
               <div className="p-3 bg-light rounded-4 mb-4 border border-light shadow-xs">
                 <h5 className="fw-bold mb-3 text-secondary">Add Question Manually</h5>
                 <Form onSubmit={handleAddQuestionManual}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="small fw-bold text-muted">Question Text</Form.Label>
-                    <Form.Control 
-                      as="textarea" rows={3} placeholder="Enter question..."
-                      value={newQuestionText} onChange={e => setNewQuestionText(e.target.value)}
-                      required className="rounded-3 shadow-none border-light bg-white"
-                    />
-                  </Form.Group>
-                  <Form.Label className="small fw-bold text-muted">Options (Mark correct option)</Form.Label>
-                  {newOptions.map((opt, idx) => (
-                    <Form.Group key={idx} className="mb-2">
-                      <div className="d-flex align-items-center gap-2">
-                        <Form.Check 
-                          type="radio" name="correctOptManual" 
-                          checked={opt.isCorrect}
-                          onChange={() => {
-                            setNewOptions(prev => prev.map((o, i) => ({
-                              ...o, isCorrect: i === idx
-                            })));
-                          }}
-                        />
-                        <Form.Control 
-                          placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                          value={opt.text}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setNewOptions(prev => prev.map((o, i) => i === idx ? { ...o, text: val } : o));
-                          }}
-                          required className="rounded-3 py-1 shadow-none border-light"
-                        />
+                  <Row className="mb-3">
+                    <Col md={6}>
+                      <Form.Label className="small fw-bold text-muted">Question Type</Form.Label>
+                      <Form.Select value={newQuestionType} onChange={e => setNewQuestionType(e.target.value)} className="rounded-3 shadow-none border-light bg-white">
+                        <option value="mcq">Multiple Choice (MCQ)</option>
+                        <option value="subjective">Subjective Question</option>
+                        <option value="coding">Coding Question</option>
+                      </Form.Select>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Label className="small fw-bold text-muted">Marks</Form.Label>
+                      <Form.Control type="number" min="1" value={newMarks} onChange={e => setNewMarks(parseInt(e.target.value) || 1)} className="rounded-3 shadow-none border-light bg-white" />
+                    </Col>
+                  </Row>
+
+                  {newQuestionType === 'coding' ? (
+                    <>
+                      <Row className="mb-3">
+                        <Col md={6}>
+                          <Form.Label className="small fw-bold text-muted">Problem Title</Form.Label>
+                          <Form.Control placeholder="e.g. Reverse a String" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="rounded-3 shadow-none border-light bg-white" />
+                        </Col>
+                        <Col md={6}>
+                          <Form.Label className="small fw-bold text-muted">Allowed Languages</Form.Label>
+                          <div className="d-flex gap-3 align-items-center mt-2">
+                            {['python', 'java', 'cpp'].map(lang => (
+                              <Form.Check key={lang} type="checkbox" label={lang.toUpperCase()} checked={newAllowedLanguages.includes(lang)} onChange={() => {
+                                setNewAllowedLanguages(prev => prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]);
+                              }} />
+                            ))}
+                          </div>
+                        </Col>
+                      </Row>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="small fw-bold text-muted">Problem Description</Form.Label>
+                        <Form.Control as="textarea" rows={3} placeholder="Write coding problem description here..." value={newDescription} onChange={e => setNewDescription(e.target.value)} className="rounded-3 shadow-none border-light bg-white" />
+                      </Form.Group>
+                      <Row className="mb-3">
+                        <Col md={4}>
+                          <Form.Label className="small fw-bold text-muted">Constraints</Form.Label>
+                          <Form.Control as="textarea" rows={2} placeholder="e.g. 1 <= N <= 10^5" value={newConstraints} onChange={e => setNewConstraints(e.target.value)} className="rounded-3 shadow-none border-light bg-white" />
+                        </Col>
+                        <Col md={4}>
+                          <Form.Label className="small fw-bold text-muted">Sample Input</Form.Label>
+                          <Form.Control as="textarea" rows={2} placeholder="Sample input" value={newSampleInput} onChange={e => setNewSampleInput(e.target.value)} className="rounded-3 shadow-none border-light bg-white" />
+                        </Col>
+                        <Col md={4}>
+                          <Form.Label className="small fw-bold text-muted">Sample Output</Form.Label>
+                          <Form.Control as="textarea" rows={2} placeholder="Sample output" value={newSampleOutput} onChange={e => setNewSampleOutput(e.target.value)} className="rounded-3 shadow-none border-light bg-white" />
+                        </Col>
+                      </Row>
+                      <div className="mb-3">
+                        <Form.Label className="small fw-bold text-primary">Test Cases</Form.Label>
+                        {newTestCases.map((tc, idx) => (
+                          <Row key={idx} className="g-2 mb-2">
+                            <Col md={5}><Form.Control placeholder="Input" value={tc.input} onChange={e => {
+                              setNewTestCases(prev => prev.map((item, i) => i === idx ? { ...item, input: e.target.value } : item));
+                            }} className="rounded-3 shadow-none border-light bg-white" /></Col>
+                            <Col md={5}><Form.Control placeholder="Expected Output" value={tc.output} onChange={e => {
+                              setNewTestCases(prev => prev.map((item, i) => i === idx ? { ...item, output: e.target.value } : item));
+                            }} className="rounded-3 shadow-none border-light bg-white" /></Col>
+                            <Col md={2}><Button variant="outline-danger" size="sm" onClick={() => setNewTestCases(prev => prev.filter((_, i) => i !== idx))}>Remove</Button></Col>
+                          </Row>
+                        ))}
+                        <Button variant="outline-secondary" size="sm" onClick={() => setNewTestCases([...newTestCases, { input: '', output: '', isPublic: false }])}>+ Add Test Case</Button>
                       </div>
-                    </Form.Group>
-                  ))}
+                    </>
+                  ) : (
+                    <>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="small fw-bold text-muted">Question Text</Form.Label>
+                        <Form.Control 
+                          as="textarea" rows={3} placeholder="Enter question..."
+                          value={newQuestionText} onChange={e => setNewQuestionText(e.target.value)}
+                          className="rounded-3 shadow-none border-light bg-white"
+                        />
+                      </Form.Group>
+                      {newQuestionType === 'mcq' && (
+                        <>
+                          <Form.Label className="small fw-bold text-muted">Options (Mark correct option)</Form.Label>
+                          {newOptions.map((opt, idx) => (
+                            <Form.Group key={idx} className="mb-2">
+                              <div className="d-flex align-items-center gap-2">
+                                <Form.Check 
+                                  type="radio" name="correctOptManual" 
+                                  checked={opt.isCorrect}
+                                  onChange={() => {
+                                    setNewOptions(prev => prev.map((o, i) => ({
+                                      ...o, isCorrect: i === idx
+                                    })));
+                                  }}
+                                />
+                                <Form.Control 
+                                  placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                                  value={opt.text}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    setNewOptions(prev => prev.map((o, i) => i === idx ? { ...o, text: val } : o));
+                                  }}
+                                  className="rounded-3 py-1 shadow-none border-light"
+                                />
+                              </div>
+                            </Form.Group>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )}
                   <Button type="submit" className="w-100 mt-3 rounded-pill fw-bold text-white border-0" style={{ backgroundColor: '#7c5cff' }}>
                     Add Question
                   </Button>

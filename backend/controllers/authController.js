@@ -6,12 +6,15 @@ import crypto from 'crypto';
 export const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists." });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Please fill all required fields." });
+    }
+    const emailClean = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: emailClean });
+    if (existingUser) return res.status(400).json({ message: "User already exists with this email." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await User.create({ name, email, password: hashedPassword, role });
+    const result = await User.create({ name: name.trim(), email: emailClean, password: hashedPassword, role: role || 'student' });
 
     const sessionId = crypto.randomBytes(16).toString('hex');
     result.sessionId = sessionId;
@@ -36,8 +39,11 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    const existingUser = await User.findOne({ email });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please provide email and password." });
+    }
+    const emailClean = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: emailClean });
     if (!existingUser) return res.status(404).json({ message: "User doesn't exist." });
 
     const isPasswordCorrect = await bcrypt.compare(password, existingUser.password);

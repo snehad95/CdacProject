@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -15,6 +15,13 @@ const RegisterModal = ({ show, handleClose }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (show) {
+      setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      setError('');
+    }
+  }, [show]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -57,20 +64,20 @@ const RegisterModal = ({ show, handleClose }) => {
             <div className="p-2 mb-3 rounded text-center"
               style={{ background: '#fdecec', color: '#b42318', fontSize: 14 }}>{error}</div>
           )}
-          <Form onSubmit={handleRegister}>
+          <Form onSubmit={handleRegister} autoComplete="off">
             <Row>
               <Col md={6} className="mb-3">
                 <Form.Group>
                   <Form.Label className="fw-semibold" style={{ color: T.text }}>Full Name</Form.Label>
                   <Form.Control name="name" placeholder="Your name" value={formData.name}
-                    onChange={handleChange} required style={inputStyle} />
+                    onChange={handleChange} required style={inputStyle} autoComplete="off" />
                 </Form.Group>
               </Col>
               <Col md={6} className="mb-3">
                 <Form.Group>
                   <Form.Label className="fw-semibold" style={{ color: T.text }}>Email address</Form.Label>
                   <Form.Control type="email" name="email" placeholder="you@example.com"
-                    value={formData.email} onChange={handleChange} required style={inputStyle} />
+                    value={formData.email} onChange={handleChange} required style={inputStyle} autoComplete="off" />
                 </Form.Group>
               </Col>
               <Col md={6} className="mb-3">
@@ -85,6 +92,7 @@ const RegisterModal = ({ show, handleClose }) => {
                       onChange={handleChange} 
                       required 
                       minLength={6} 
+                      autoComplete="new-password"
                       style={{ ...inputStyle, paddingRight: '42px' }} 
                     />
                     <button

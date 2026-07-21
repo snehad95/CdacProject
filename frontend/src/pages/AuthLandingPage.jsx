@@ -43,18 +43,9 @@ const AuthLandingPage = () => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
 
-    const role = user?.role;
-    if (role === 'admin') {
-      navigate('/admin');
-    } else if (role === 'teacher') {
-      navigate('/teacher');
-    } else {
-      navigate('/exams');
-    }
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 200);
+    const role = user?.role || 'student';
+    const targetUrl = role === 'admin' ? '/admin' : role === 'teacher' ? '/teacher' : '/exams';
+    window.location.href = targetUrl;
   };
 
   const handleLoginSubmit = async (e) => {
@@ -191,7 +182,7 @@ const AuthLandingPage = () => {
               }}
             >
               <img
-                src="/auth-banner.png"
+                src="/pgcp-banner.jpg"
                 alt="C-DAC ACTS Post Graduate Certificate Programme Banner"
                 style={{
                   width: '100%',
@@ -264,7 +255,7 @@ const AuthLandingPage = () => {
 
                 {/* Login Form */}
                 {activeTab === 'login' ? (
-                  <Form onSubmit={handleLoginSubmit}>
+                  <Form onSubmit={handleLoginSubmit} autoComplete="off">
                     <Form.Group className="mb-3">
                       <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>
                         Email Address
@@ -281,11 +272,11 @@ const AuthLandingPage = () => {
                           onFocus={() => setFocusedField('loginEmail')}
                           onBlur={() => setFocusedField(null)}
                           required
+                          autoComplete="off"
                           style={getInputStyle('loginEmail')}
                         />
                       </div>
                     </Form.Group>
-
                     <Form.Group className="mb-4">
                       <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>
                         Password
@@ -302,6 +293,7 @@ const AuthLandingPage = () => {
                           onFocus={() => setFocusedField('loginPassword')}
                           onBlur={() => setFocusedField(null)}
                           required
+                          autoComplete="new-password"
                           style={{ ...getInputStyle('loginPassword'), paddingRight: 44 }}
                         />
                         <button
@@ -341,7 +333,7 @@ const AuthLandingPage = () => {
                   </Form>
                 ) : (
                   /* Register Form */
-                  <Form onSubmit={handleRegisterSubmit}>
+                  <Form onSubmit={handleRegisterSubmit} autoComplete="off">
                     <Form.Group className="mb-3">
                       <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>
                         Full Name
@@ -358,11 +350,11 @@ const AuthLandingPage = () => {
                           onFocus={() => setFocusedField('regName')}
                           onBlur={() => setFocusedField(null)}
                           required
+                          autoComplete="off"
                           style={getInputStyle('regName')}
                         />
                       </div>
                     </Form.Group>
-
                     <Form.Group className="mb-3">
                       <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>
                         Email Address
@@ -379,11 +371,11 @@ const AuthLandingPage = () => {
                           onFocus={() => setFocusedField('regEmail')}
                           onBlur={() => setFocusedField(null)}
                           required
+                          autoComplete="off"
                           style={getInputStyle('regEmail')}
                         />
                       </div>
                     </Form.Group>
-
                     <Form.Group className="mb-3">
                       <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>
                         Password
@@ -401,6 +393,7 @@ const AuthLandingPage = () => {
                           onBlur={() => setFocusedField(null)}
                           required
                           minLength={6}
+                          autoComplete="new-password"
                           style={{ ...getInputStyle('regPassword'), paddingRight: 44 }}
                         />
                         <button
@@ -422,7 +415,6 @@ const AuthLandingPage = () => {
                         </button>
                       </div>
                     </Form.Group>
-
                     <Form.Group className="mb-4">
                       <Form.Label className="fw-bold small text-uppercase" style={{ color: '#475569', fontSize: '0.75rem', letterSpacing: '0.6px' }}>
                         Confirm Password
@@ -439,6 +431,7 @@ const AuthLandingPage = () => {
                           onFocus={() => setFocusedField('regConfirmPassword')}
                           onBlur={() => setFocusedField(null)}
                           required
+                          autoComplete="new-password"
                           style={{ ...getInputStyle('regConfirmPassword'), paddingRight: 44 }}
                         />
                         <button

@@ -57,6 +57,36 @@ router.post('/', protect, teacherOrAdmin, upload.single('pdf'), async (req, res)
   }
 });
 
+// @desc    Issue Dynamic Certificate (no file upload needed)
+// @route   POST /api/certificates/dynamic
+router.post('/dynamic', protect, teacherOrAdmin, async (req, res) => {
+  try {
+    const { studentId, examId } = req.body;
+    if (!studentId || !examId) {
+      return res.status(400).json({ message: 'Please provide studentId and examId' });
+    }
+
+    let certificate = await Certificate.findOne({ studentId, examId });
+    if (certificate) {
+      certificate.pdfUrl = 'DYNAMIC_CERTIFICATE';
+      certificate.isPublished = true;
+      await certificate.save();
+    } else {
+      certificate = new Certificate({
+        studentId,
+        examId,
+        pdfUrl: 'DYNAMIC_CERTIFICATE',
+        isPublished: true
+      });
+      await certificate.save();
+    }
+
+    res.status(201).json(certificate);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @desc    Publish Certificate
 // @route   PUT /api/certificates/:id/publish
 router.put('/:id/publish', protect, teacherOrAdmin, async (req, res) => {

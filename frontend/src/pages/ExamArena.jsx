@@ -600,21 +600,35 @@ const ExamArena = () => {
     const blockBack = () => window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', blockBack);
 
-    document.oncontextmenu = e => e.preventDefault();
-    document.oncopy = e => e.preventDefault();
-    document.onpaste = e => e.preventDefault();
-    document.oncut = e => e.preventDefault();
+    const handleSecurityInfraction = (actionName) => {
+      if (!submittedRef.current && !showStartOverlay) {
+        toast.error(`Security Alert: ${actionName} is strictly disabled during proctored exams!`, { id: 'security-toast' });
+        logViolationToServer(`Security Infraction: ${actionName}`);
+      }
+    };
+
+    document.oncontextmenu = e => { e.preventDefault(); handleSecurityInfraction('Right-click Context Menu'); };
+    document.oncopy = e => { e.preventDefault(); handleSecurityInfraction('Copying content'); };
+    document.onpaste = e => { e.preventDefault(); handleSecurityInfraction('Pasting content'); };
+    document.oncut = e => { e.preventDefault(); handleSecurityInfraction('Cutting content'); };
 
     const blockKeys = (e) => {
       const isTextarea = e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'textarea';
       if (isTextarea) {
         if ((e.ctrlKey || e.metaKey) && ['c', 'v'].includes(e.key.toLowerCase())) {
           e.preventDefault();
+          handleSecurityInfraction('Clipboard shortcut in editor');
         }
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'x', 'p', 's', 'u'].includes(e.key.toLowerCase())) e.preventDefault();
-      if (['F12', 'F5'].includes(e.key)) e.preventDefault();
+      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'x', 'p', 's', 'u'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        handleSecurityInfraction(`Keyboard shortcut (${e.key})`);
+      }
+      if (['F12', 'F5'].includes(e.key) || ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()))) {
+        e.preventDefault();
+        handleSecurityInfraction('Developer Tools / Refresh shortcut');
+      }
     };
     document.addEventListener('keydown', blockKeys);
 
